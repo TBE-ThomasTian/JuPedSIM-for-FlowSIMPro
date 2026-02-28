@@ -1,0 +1,29 @@
+cff-version: 1.2.0
+title: "JuPedSim"
+message: >-
+  If you use this software, please cite it using the
+  metadata from this file.
+type: software
+authors:
+- family-names: "Chraibi"
+  given-names: "Mohcine"
+  orcid: "https://orcid.org/0000-0002-0999-6807"
+  affiliation: Forschungszentrum Jülich GmbH, Germany
+- family-names: "Kratz"
+  given-names: "Kai"
+  affiliation: Forschungszentrum Jülich GmbH, Germany
+- family-names: "Schrödter"
+  given-names: "Tobias"
+  orcid: "https://orcid.org/0000-0002-1071-060X"
+  affiliation: Forschungszentrum Jülich GmbH, Germany
+- name: "The JuPedSim Development Team"
+repository-code: "https://github.com/PedestrianDynamics/jupedsim"
+url: "https://jupedsim.org"
+version: v1.1.0
+keywords:
+  - "pedestrian dynamics"
+  - "pedestrian analysis"
+  - simulation 
+  - modeling
+  - visualization
+  

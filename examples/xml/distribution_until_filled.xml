@@ -1,0 +1,40 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<scenario dt="0.02" max_iterations="25000">
+  <model
+    type="collision_free_speed"
+    strength_neighbor_repulsion="8.0"
+    range_neighbor_repulsion="0.12"
+    strength_geometry_repulsion="6.0"
+    range_geometry_repulsion="0.03"
+  />
+
+  <geometry>
+    <walkable>
+      <vertex x="0.0" y="0.0" />
+      <vertex x="40.0" y="0.0" />
+      <vertex x="40.0" y="30.0" />
+      <vertex x="0.0" y="30.0" />
+    </walkable>
+  </geometry>
+
+  <exit>
+    <vertex x="38.0" y="13.0" />
+    <vertex x="40.0" y="13.0" />
+    <vertex x="40.0" y="17.0" />
+    <vertex x="38.0" y="17.0" />
+  </exit>
+
+  <agents>
+    <distribution
+      mode="until_filled"
+      distance_to_agents="0.65"
+      distance_to_polygon="0.20"
+      seed="42"
+      max_iterations="12000"
+      k="30"
+    >
+      <profile desired_speed="1.40" radius="0.20" time_gap="0.90" age_group="adult" avatar_hint="adult" weight="1.0" />
+      <profile desired_speed="1.00" radius="0.22" time_gap="1.20" age_group="elderly" avatar_hint="grandpa" weight="1.0" />
+    </distribution>
+  </agents>
+</scenario>

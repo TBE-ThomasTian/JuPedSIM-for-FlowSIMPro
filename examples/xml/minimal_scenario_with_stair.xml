@@ -1,0 +1,42 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<scenario dt="0.01" max_iterations="12000">
+  <model
+    type="collision_free_speed"
+    strength_neighbor_repulsion="8.0"
+    range_neighbor_repulsion="0.1"
+    strength_geometry_repulsion="5.0"
+    range_geometry_repulsion="0.02"
+  />
+
+  <geometry>
+    <walkable>
+      <vertex x="0.0" y="0.0" />
+      <vertex x="20.0" y="0.0" />
+      <vertex x="20.0" y="10.0" />
+      <vertex x="0.0" y="10.0" />
+    </walkable>
+  </geometry>
+
+  <exit>
+    <vertex x="18.0" y="4.0" />
+    <vertex x="20.0" y="4.0" />
+    <vertex x="20.0" y="6.0" />
+    <vertex x="18.0" y="6.0" />
+  </exit>
+
+  <stair
+    x="10.0"
+    y="5.0"
+    distance="0.8"
+    length="8.0"
+    speed_factor="0.55"
+    waiting_time="1.5"
+  />
+
+  <agents>
+    <agent x="2.0" y="5.0" desired_speed="1.3" radius="0.2" time_gap="1.0" />
+    <agent x="1.4" y="4.6" desired_speed="1.2" radius="0.2" time_gap="1.0" />
+    <agent x="1.4" y="5.4" desired_speed="1.2" radius="0.2" time_gap="1.0" />
+    <agent x="0.8" y="5.0" desired_speed="1.1" radius="0.2" time_gap="1.0" />
+  </agents>
+</scenario>

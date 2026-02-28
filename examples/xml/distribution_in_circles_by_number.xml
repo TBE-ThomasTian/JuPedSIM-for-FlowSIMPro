@@ -1,0 +1,44 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<scenario dt="0.02" max_iterations="25000">
+  <model
+    type="collision_free_speed"
+    strength_neighbor_repulsion="8.0"
+    range_neighbor_repulsion="0.12"
+    strength_geometry_repulsion="6.0"
+    range_geometry_repulsion="0.03"
+  />
+
+  <geometry>
+    <walkable>
+      <vertex x="0.0" y="0.0" />
+      <vertex x="40.0" y="0.0" />
+      <vertex x="40.0" y="30.0" />
+      <vertex x="0.0" y="30.0" />
+    </walkable>
+  </geometry>
+
+  <exit>
+    <vertex x="38.0" y="13.0" />
+    <vertex x="40.0" y="13.0" />
+    <vertex x="40.0" y="17.0" />
+    <vertex x="38.0" y="17.0" />
+  </exit>
+
+  <agents>
+    <distribution
+      mode="in_circles_by_number"
+      center_x="8.0"
+      center_y="15.0"
+      distance_to_agents="0.50"
+      distance_to_polygon="0.20"
+      seed="42"
+      max_iterations="12000"
+    >
+      <segment min_radius="0.0" max_radius="4.0" number_of_agents="22" />
+      <segment min_radius="4.0" max_radius="8.0" number_of_agents="35" />
+      <segment min_radius="8.0" max_radius="12.0" number_of_agents="28" />
+      <profile desired_speed="1.45" radius="0.20" time_gap="0.90" age_group="adult" avatar_hint="adult" weight="1.0" />
+      <profile desired_speed="0.95" radius="0.22" time_gap="1.25" age_group="elderly" avatar_hint="grandpa" weight="1.0" />
+    </distribution>
+  </agents>
+</scenario>

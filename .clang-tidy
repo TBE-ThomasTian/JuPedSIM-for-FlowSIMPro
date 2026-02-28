@@ -1,0 +1,20 @@
+---
+Checks: >-
+    -*,
+    modernize-avoid-bind,
+    modernize-concat-nested-namespaces,
+    modernize-deprecated-headers,
+    modernize-deprecated-ios-base-aliases,
+    modernize-make-shared,
+    modernize-make-unique,
+    modernize-pass-by-value,
+    modernize-raw-string-literal,
+    modernize-redundant-void-arg,
+    modernize-replace-auto-ptr,
+    modernize-replace-disallow-copy-and-assign-macro,
+    modernize-replace-random-shuffle,
+    modernize-shrink-to-fit,
+    modernize-unary-static-assert,
+    modernize-use-bool-literals,
+    modernize-use-override,
+HeaderFilterRegex: '.*'

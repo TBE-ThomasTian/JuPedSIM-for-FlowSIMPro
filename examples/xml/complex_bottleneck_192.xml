@@ -1,0 +1,235 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<scenario dt="0.02" max_iterations="30000">
+  <model
+    type="collision_free_speed"
+    strength_neighbor_repulsion="8.0"
+    range_neighbor_repulsion="0.12"
+    strength_geometry_repulsion="6.0"
+    range_geometry_repulsion="0.03"
+  />
+
+  <geometry>
+    <walkable>
+      <vertex x="0.0" y="0.0" />
+      <vertex x="80.0" y="0.0" />
+      <vertex x="80.0" y="30.0" />
+      <vertex x="0.0" y="30.0" />
+    </walkable>
+
+    <obstacle>
+      <vertex x="38.0" y="0.0" />
+      <vertex x="42.0" y="0.0" />
+      <vertex x="42.0" y="13.0" />
+      <vertex x="38.0" y="13.0" />
+    </obstacle>
+
+    <obstacle>
+      <vertex x="38.0" y="17.0" />
+      <vertex x="42.0" y="17.0" />
+      <vertex x="42.0" y="30.0" />
+      <vertex x="38.0" y="30.0" />
+    </obstacle>
+  </geometry>
+
+  <exit>
+    <vertex x="78.0" y="13.0" />
+    <vertex x="80.0" y="13.0" />
+    <vertex x="80.0" y="17.0" />
+    <vertex x="78.0" y="17.0" />
+  </exit>
+
+  <agents>
+    <agent x="3.0" y="4.0" desired_speed="1.20" radius="0.20" time_gap="0.90" />
+    <agent x="5.0" y="4.0" desired_speed="1.35" radius="0.20" time_gap="0.90" />
+    <agent x="7.0" y="4.0" desired_speed="1.50" radius="0.20" time_gap="0.90" />
+    <agent x="9.0" y="4.0" desired_speed="1.20" radius="0.20" time_gap="0.90" />
+    <agent x="11.0" y="4.0" desired_speed="1.35" radius="0.20" time_gap="0.90" />
+    <agent x="13.0" y="4.0" desired_speed="1.50" radius="0.20" time_gap="0.90" />
+    <agent x="15.0" y="4.0" desired_speed="1.20" radius="0.20" time_gap="0.90" />
+    <agent x="17.0" y="4.0" desired_speed="1.35" radius="0.20" time_gap="0.90" />
+    <agent x="19.0" y="4.0" desired_speed="1.50" radius="0.20" time_gap="0.90" />
+    <agent x="21.0" y="4.0" desired_speed="1.20" radius="0.20" time_gap="0.90" />
+    <agent x="23.0" y="4.0" desired_speed="1.35" radius="0.20" time_gap="0.90" />
+    <agent x="25.0" y="4.0" desired_speed="1.50" radius="0.20" time_gap="0.90" />
+    <agent x="27.0" y="4.0" desired_speed="1.20" radius="0.20" time_gap="0.90" />
+    <agent x="29.0" y="4.0" desired_speed="1.35" radius="0.20" time_gap="0.90" />
+    <agent x="31.0" y="4.0" desired_speed="1.50" radius="0.20" time_gap="0.90" />
+    <agent x="33.0" y="4.0" desired_speed="1.20" radius="0.20" time_gap="0.90" />
+    <agent x="3.0" y="6.0" desired_speed="1.35" radius="0.20" time_gap="0.90" />
+    <agent x="5.0" y="6.0" desired_speed="1.50" radius="0.20" time_gap="0.90" />
+    <agent x="7.0" y="6.0" desired_speed="1.20" radius="0.20" time_gap="0.90" />
+    <agent x="9.0" y="6.0" desired_speed="1.35" radius="0.20" time_gap="0.90" />
+    <agent x="11.0" y="6.0" desired_speed="1.50" radius="0.20" time_gap="0.90" />
+    <agent x="13.0" y="6.0" desired_speed="1.20" radius="0.20" time_gap="0.90" />
+    <agent x="15.0" y="6.0" desired_speed="1.35" radius="0.20" time_gap="0.90" />
+    <agent x="17.0" y="6.0" desired_speed="1.50" radius="0.20" time_gap="0.90" />
+    <agent x="19.0" y="6.0" desired_speed="1.20" radius="0.20" time_gap="0.90" />
+    <agent x="21.0" y="6.0" desired_speed="1.35" radius="0.20" time_gap="0.90" />
+    <agent x="23.0" y="6.0" desired_speed="1.50" radius="0.20" time_gap="0.90" />
+    <agent x="25.0" y="6.0" desired_speed="1.20" radius="0.20" time_gap="0.90" />
+    <agent x="27.0" y="6.0" desired_speed="1.35" radius="0.20" time_gap="0.90" />
+    <agent x="29.0" y="6.0" desired_speed="1.50" radius="0.20" time_gap="0.90" />
+    <agent x="31.0" y="6.0" desired_speed="1.20" radius="0.20" time_gap="0.90" />
+    <agent x="33.0" y="6.0" desired_speed="1.35" radius="0.20" time_gap="0.90" />
+    <agent x="3.0" y="8.0" desired_speed="1.50" radius="0.20" time_gap="0.90" />
+    <agent x="5.0" y="8.0" desired_speed="1.20" radius="0.20" time_gap="0.90" />
+    <agent x="7.0" y="8.0" desired_speed="1.35" radius="0.20" time_gap="0.90" />
+    <agent x="9.0" y="8.0" desired_speed="1.50" radius="0.20" time_gap="0.90" />
+    <agent x="11.0" y="8.0" desired_speed="1.20" radius="0.20" time_gap="0.90" />
+    <agent x="13.0" y="8.0" desired_speed="1.35" radius="0.20" time_gap="0.90" />
+    <agent x="15.0" y="8.0" desired_speed="1.50" radius="0.20" time_gap="0.90" />
+    <agent x="17.0" y="8.0" desired_speed="1.20" radius="0.20" time_gap="0.90" />
+    <agent x="19.0" y="8.0" desired_speed="1.35" radius="0.20" time_gap="0.90" />
+    <agent x="21.0" y="8.0" desired_speed="1.50" radius="0.20" time_gap="0.90" />
+    <agent x="23.0" y="8.0" desired_speed="1.20" radius="0.20" time_gap="0.90" />
+    <agent x="25.0" y="8.0" desired_speed="1.35" radius="0.20" time_gap="0.90" />
+    <agent x="27.0" y="8.0" desired_speed="1.50" radius="0.20" time_gap="0.90" />
+    <agent x="29.0" y="8.0" desired_speed="1.20" radius="0.20" time_gap="0.90" />
+    <agent x="31.0" y="8.0" desired_speed="1.35" radius="0.20" time_gap="0.90" />
+    <agent x="33.0" y="8.0" desired_speed="1.50" radius="0.20" time_gap="0.90" />
+    <agent x="3.0" y="10.0" desired_speed="1.20" radius="0.20" time_gap="0.90" />
+    <agent x="5.0" y="10.0" desired_speed="1.35" radius="0.20" time_gap="0.90" />
+    <agent x="7.0" y="10.0" desired_speed="1.50" radius="0.20" time_gap="0.90" />
+    <agent x="9.0" y="10.0" desired_speed="1.20" radius="0.20" time_gap="0.90" />
+    <agent x="11.0" y="10.0" desired_speed="1.35" radius="0.20" time_gap="0.90" />
+    <agent x="13.0" y="10.0" desired_speed="1.50" radius="0.20" time_gap="0.90" />
+    <agent x="15.0" y="10.0" desired_speed="1.20" radius="0.20" time_gap="0.90" />
+    <agent x="17.0" y="10.0" desired_speed="1.35" radius="0.20" time_gap="0.90" />
+    <agent x="19.0" y="10.0" desired_speed="1.50" radius="0.20" time_gap="0.90" />
+    <agent x="21.0" y="10.0" desired_speed="1.20" radius="0.20" time_gap="0.90" />
+    <agent x="23.0" y="10.0" desired_speed="1.35" radius="0.20" time_gap="0.90" />
+    <agent x="25.0" y="10.0" desired_speed="1.50" radius="0.20" time_gap="0.90" />
+    <agent x="27.0" y="10.0" desired_speed="1.20" radius="0.20" time_gap="0.90" />
+    <agent x="29.0" y="10.0" desired_speed="1.35" radius="0.20" time_gap="0.90" />
+    <agent x="31.0" y="10.0" desired_speed="1.50" radius="0.20" time_gap="0.90" />
+    <agent x="33.0" y="10.0" desired_speed="1.20" radius="0.20" time_gap="0.90" />
+    <agent x="3.0" y="12.0" desired_speed="1.35" radius="0.20" time_gap="0.90" />
+    <agent x="5.0" y="12.0" desired_speed="1.50" radius="0.20" time_gap="0.90" />
+    <agent x="7.0" y="12.0" desired_speed="1.20" radius="0.20" time_gap="0.90" />
+    <agent x="9.0" y="12.0" desired_speed="1.35" radius="0.20" time_gap="0.90" />
+    <agent x="11.0" y="12.0" desired_speed="1.50" radius="0.20" time_gap="0.90" />
+    <agent x="13.0" y="12.0" desired_speed="1.20" radius="0.20" time_gap="0.90" />
+    <agent x="15.0" y="12.0" desired_speed="1.35" radius="0.20" time_gap="0.90" />
+    <agent x="17.0" y="12.0" desired_speed="1.50" radius="0.20" time_gap="0.90" />
+    <agent x="19.0" y="12.0" desired_speed="1.20" radius="0.20" time_gap="0.90" />
+    <agent x="21.0" y="12.0" desired_speed="1.35" radius="0.20" time_gap="0.90" />
+    <agent x="23.0" y="12.0" desired_speed="1.50" radius="0.20" time_gap="0.90" />
+    <agent x="25.0" y="12.0" desired_speed="1.20" radius="0.20" time_gap="0.90" />
+    <agent x="27.0" y="12.0" desired_speed="1.35" radius="0.20" time_gap="0.90" />
+    <agent x="29.0" y="12.0" desired_speed="1.50" radius="0.20" time_gap="0.90" />
+    <agent x="31.0" y="12.0" desired_speed="1.20" radius="0.20" time_gap="0.90" />
+    <agent x="33.0" y="12.0" desired_speed="1.35" radius="0.20" time_gap="0.90" />
+    <agent x="3.0" y="14.0" desired_speed="1.50" radius="0.20" time_gap="0.90" />
+    <agent x="5.0" y="14.0" desired_speed="1.20" radius="0.20" time_gap="0.90" />
+    <agent x="7.0" y="14.0" desired_speed="1.35" radius="0.20" time_gap="0.90" />
+    <agent x="9.0" y="14.0" desired_speed="1.50" radius="0.20" time_gap="0.90" />
+    <agent x="11.0" y="14.0" desired_speed="1.20" radius="0.20" time_gap="0.90" />
+    <agent x="13.0" y="14.0" desired_speed="1.35" radius="0.20" time_gap="0.90" />
+    <agent x="15.0" y="14.0" desired_speed="1.50" radius="0.20" time_gap="0.90" />
+    <agent x="17.0" y="14.0" desired_speed="1.20" radius="0.20" time_gap="0.90" />
+    <agent x="19.0" y="14.0" desired_speed="1.35" radius="0.20" time_gap="0.90" />
+    <agent x="21.0" y="14.0" desired_speed="1.50" radius="0.20" time_gap="0.90" />
+    <agent x="23.0" y="14.0" desired_speed="1.20" radius="0.20" time_gap="0.90" />
+    <agent x="25.0" y="14.0" desired_speed="1.35" radius="0.20" time_gap="0.90" />
+    <agent x="27.0" y="14.0" desired_speed="1.50" radius="0.20" time_gap="0.90" />
+    <agent x="29.0" y="14.0" desired_speed="1.20" radius="0.20" time_gap="0.90" />
+    <agent x="31.0" y="14.0" desired_speed="1.35" radius="0.20" time_gap="0.90" />
+    <agent x="33.0" y="14.0" desired_speed="1.50" radius="0.20" time_gap="0.90" />
+    <agent x="3.0" y="16.0" desired_speed="1.20" radius="0.20" time_gap="0.90" />
+    <agent x="5.0" y="16.0" desired_speed="1.35" radius="0.20" time_gap="0.90" />
+    <agent x="7.0" y="16.0" desired_speed="1.50" radius="0.20" time_gap="0.90" />
+    <agent x="9.0" y="16.0" desired_speed="1.20" radius="0.20" time_gap="0.90" />
+    <agent x="11.0" y="16.0" desired_speed="1.35" radius="0.20" time_gap="0.90" />
+    <agent x="13.0" y="16.0" desired_speed="1.50" radius="0.20" time_gap="0.90" />
+    <agent x="15.0" y="16.0" desired_speed="1.20" radius="0.20" time_gap="0.90" />
+    <agent x="17.0" y="16.0" desired_speed="1.35" radius="0.20" time_gap="0.90" />
+    <agent x="19.0" y="16.0" desired_speed="1.50" radius="0.20" time_gap="0.90" />
+    <agent x="21.0" y="16.0" desired_speed="1.20" radius="0.20" time_gap="0.90" />
+    <agent x="23.0" y="16.0" desired_speed="1.35" radius="0.20" time_gap="0.90" />
+    <agent x="25.0" y="16.0" desired_speed="1.50" radius="0.20" time_gap="0.90" />
+    <agent x="27.0" y="16.0" desired_speed="1.20" radius="0.20" time_gap="0.90" />
+    <agent x="29.0" y="16.0" desired_speed="1.35" radius="0.20" time_gap="0.90" />
+    <agent x="31.0" y="16.0" desired_speed="1.50" radius="0.20" time_gap="0.90" />
+    <agent x="33.0" y="16.0" desired_speed="1.20" radius="0.20" time_gap="0.90" />
+    <agent x="3.0" y="18.0" desired_speed="1.35" radius="0.20" time_gap="0.90" />
+    <agent x="5.0" y="18.0" desired_speed="1.50" radius="0.20" time_gap="0.90" />
+    <agent x="7.0" y="18.0" desired_speed="1.20" radius="0.20" time_gap="0.90" />
+    <agent x="9.0" y="18.0" desired_speed="1.35" radius="0.20" time_gap="0.90" />
+    <agent x="11.0" y="18.0" desired_speed="1.50" radius="0.20" time_gap="0.90" />
+    <agent x="13.0" y="18.0" desired_speed="1.20" radius="0.20" time_gap="0.90" />
+    <agent x="15.0" y="18.0" desired_speed="1.35" radius="0.20" time_gap="0.90" />
+    <agent x="17.0" y="18.0" desired_speed="1.50" radius="0.20" time_gap="0.90" />
+    <agent x="19.0" y="18.0" desired_speed="1.20" radius="0.20" time_gap="0.90" />
+    <agent x="21.0" y="18.0" desired_speed="1.35" radius="0.20" time_gap="0.90" />
+    <agent x="23.0" y="18.0" desired_speed="1.50" radius="0.20" time_gap="0.90" />
+    <agent x="25.0" y="18.0" desired_speed="1.20" radius="0.20" time_gap="0.90" />
+    <agent x="27.0" y="18.0" desired_speed="1.35" radius="0.20" time_gap="0.90" />
+    <agent x="29.0" y="18.0" desired_speed="1.50" radius="0.20" time_gap="0.90" />
+    <agent x="31.0" y="18.0" desired_speed="1.20" radius="0.20" time_gap="0.90" />
+    <agent x="33.0" y="18.0" desired_speed="1.35" radius="0.20" time_gap="0.90" />
+    <agent x="3.0" y="20.0" desired_speed="1.50" radius="0.20" time_gap="0.90" />
+    <agent x="5.0" y="20.0" desired_speed="1.20" radius="0.20" time_gap="0.90" />
+    <agent x="7.0" y="20.0" desired_speed="1.35" radius="0.20" time_gap="0.90" />
+    <agent x="9.0" y="20.0" desired_speed="1.50" radius="0.20" time_gap="0.90" />
+    <agent x="11.0" y="20.0" desired_speed="1.20" radius="0.20" time_gap="0.90" />
+    <agent x="13.0" y="20.0" desired_speed="1.35" radius="0.20" time_gap="0.90" />
+    <agent x="15.0" y="20.0" desired_speed="1.50" radius="0.20" time_gap="0.90" />
+    <agent x="17.0" y="20.0" desired_speed="1.20" radius="0.20" time_gap="0.90" />
+    <agent x="19.0" y="20.0" desired_speed="1.35" radius="0.20" time_gap="0.90" />
+    <agent x="21.0" y="20.0" desired_speed="1.50" radius="0.20" time_gap="0.90" />
+    <agent x="23.0" y="20.0" desired_speed="1.20" radius="0.20" time_gap="0.90" />
+    <agent x="25.0" y="20.0" desired_speed="1.35" radius="0.20" time_gap="0.90" />
+    <agent x="27.0" y="20.0" desired_speed="1.50" radius="0.20" time_gap="0.90" />
+    <agent x="29.0" y="20.0" desired_speed="1.20" radius="0.20" time_gap="0.90" />
+    <agent x="31.0" y="20.0" desired_speed="1.35" radius="0.20" time_gap="0.90" />
+    <agent x="33.0" y="20.0" desired_speed="1.50" radius="0.20" time_gap="0.90" />
+    <agent x="3.0" y="22.0" desired_speed="1.20" radius="0.20" time_gap="0.90" />
+    <agent x="5.0" y="22.0" desired_speed="1.35" radius="0.20" time_gap="0.90" />
+    <agent x="7.0" y="22.0" desired_speed="1.50" radius="0.20" time_gap="0.90" />
+    <agent x="9.0" y="22.0" desired_speed="1.20" radius="0.20" time_gap="0.90" />
+    <agent x="11.0" y="22.0" desired_speed="1.35" radius="0.20" time_gap="0.90" />
+    <agent x="13.0" y="22.0" desired_speed="1.50" radius="0.20" time_gap="0.90" />
+    <agent x="15.0" y="22.0" desired_speed="1.20" radius="0.20" time_gap="0.90" />
+    <agent x="17.0" y="22.0" desired_speed="1.35" radius="0.20" time_gap="0.90" />
+    <agent x="19.0" y="22.0" desired_speed="1.50" radius="0.20" time_gap="0.90" />
+    <agent x="21.0" y="22.0" desired_speed="1.20" radius="0.20" time_gap="0.90" />
+    <agent x="23.0" y="22.0" desired_speed="1.35" radius="0.20" time_gap="0.90" />
+    <agent x="25.0" y="22.0" desired_speed="1.50" radius="0.20" time_gap="0.90" />
+    <agent x="27.0" y="22.0" desired_speed="1.20" radius="0.20" time_gap="0.90" />
+    <agent x="29.0" y="22.0" desired_speed="1.35" radius="0.20" time_gap="0.90" />
+    <agent x="31.0" y="22.0" desired_speed="1.50" radius="0.20" time_gap="0.90" />
+    <agent x="33.0" y="22.0" desired_speed="1.20" radius="0.20" time_gap="0.90" />
+    <agent x="3.0" y="24.0" desired_speed="1.35" radius="0.20" time_gap="0.90" />
+    <agent x="5.0" y="24.0" desired_speed="1.50" radius="0.20" time_gap="0.90" />
+    <agent x="7.0" y="24.0" desired_speed="1.20" radius="0.20" time_gap="0.90" />
+    <agent x="9.0" y="24.0" desired_speed="1.35" radius="0.20" time_gap="0.90" />
+    <agent x="11.0" y="24.0" desired_speed="1.50" radius="0.20" time_gap="0.90" />
+    <agent x="13.0" y="24.0" desired_speed="1.20" radius="0.20" time_gap="0.90" />
+    <agent x="15.0" y="24.0" desired_speed="1.35" radius="0.20" time_gap="0.90" />
+    <agent x="17.0" y="24.0" desired_speed="1.50" radius="0.20" time_gap="0.90" />
+    <agent x="19.0" y="24.0" desired_speed="1.20" radius="0.20" time_gap="0.90" />
+    <agent x="21.0" y="24.0" desired_speed="1.35" radius="0.20" time_gap="0.90" />
+    <agent x="23.0" y="24.0" desired_speed="1.50" radius="0.20" time_gap="0.90" />
+    <agent x="25.0" y="24.0" desired_speed="1.20" radius="0.20" time_gap="0.90" />
+    <agent x="27.0" y="24.0" desired_speed="1.35" radius="0.20" time_gap="0.90" />
+    <agent x="29.0" y="24.0" desired_speed="1.50" radius="0.20" time_gap="0.90" />
+    <agent x="31.0" y="24.0" desired_speed="1.20" radius="0.20" time_gap="0.90" />
+    <agent x="33.0" y="24.0" desired_speed="1.35" radius="0.20" time_gap="0.90" />
+    <agent x="3.0" y="26.0" desired_speed="1.50" radius="0.20" time_gap="0.90" />
+    <agent x="5.0" y="26.0" desired_speed="1.20" radius="0.20" time_gap="0.90" />
+    <agent x="7.0" y="26.0" desired_speed="1.35" radius="0.20" time_gap="0.90" />
+    <agent x="9.0" y="26.0" desired_speed="1.50" radius="0.20" time_gap="0.90" />
+    <agent x="11.0" y="26.0" desired_speed="1.20" radius="0.20" time_gap="0.90" />
+    <agent x="13.0" y="26.0" desired_speed="1.35" radius="0.20" time_gap="0.90" />
+    <agent x="15.0" y="26.0" desired_speed="1.50" radius="0.20" time_gap="0.90" />
+    <agent x="17.0" y="26.0" desired_speed="1.20" radius="0.20" time_gap="0.90" />
+    <agent x="19.0" y="26.0" desired_speed="1.35" radius="0.20" time_gap="0.90" />
+    <agent x="21.0" y="26.0" desired_speed="1.50" radius="0.20" time_gap="0.90" />
+    <agent x="23.0" y="26.0" desired_speed="1.20" radius="0.20" time_gap="0.90" />
+    <agent x="25.0" y="26.0" desired_speed="1.35" radius="0.20" time_gap="0.90" />
+    <agent x="27.0" y="26.0" desired_speed="1.50" radius="0.20" time_gap="0.90" />
+    <agent x="29.0" y="26.0" desired_speed="1.20" radius="0.20" time_gap="0.90" />
+    <agent x="31.0" y="26.0" desired_speed="1.35" radius="0.20" time_gap="0.90" />
+    <agent x="33.0" y="26.0" desired_speed="1.50" radius="0.20" time_gap="0.90" />
+  </agents>
+</scenario>

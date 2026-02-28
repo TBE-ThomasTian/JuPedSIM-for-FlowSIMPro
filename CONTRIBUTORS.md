@@ -1,0 +1,30 @@
+# Contributors
+
+- Andrijana Brkic
+- Anna Braun
+- Arne Graf
+- Arno Gay-Bauer
+- Benedikt Steinbusch
+- Cao Shuchao
+- Carlos Esparza
+- Christian Hirt
+- David Haensel
+- Denis Shikhalev
+- Erik Andresen
+- Fabian Mack
+- Fabian Plum
+- Gregor Jaeger
+- Gregor Laemmel
+- Guido Basten
+- Jette Schumann
+- Kai Kratz
+- Karthik Krish
+- Michael Behrisch
+- Mind-the-Cap
+- Mohcine Chraibi
+- Olaf Angelo Banse
+- Qiancheng Xu
+- Tao Zhong
+- Tobias Schrödter
+- Ulrich Kemloh
+- Weichen Liao
