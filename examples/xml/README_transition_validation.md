@@ -53,3 +53,21 @@ Beispiel aus diesem Repo (Stand dieser Konfiguration):
 
 - `round_robin_multi_exit_validation.xml`: `iterations=6280`
 - `adaptive_multi_exit_validation.xml`: `iterations=4927`
+
+## Monte-Carlo Unsicherheitsanalyse (P50/P95)
+
+Fuer automatisierte Unsicherheitsauswertung (mehrere Seeds + KPI-Report mit
+P50/P95, Exit-Throughput und Hotspots):
+
+```bash
+python3 scripts/evac_uncertainty_cli.py \
+  --scenario examples/xml/adaptive_multi_exit_validation.xml \
+  --cli build/bin/jupedsim-cli \
+  --runs 20 \
+  --output-dir artifacts/evac_uncertainty
+```
+
+Erzeugte Reports:
+
+- `artifacts/evac_uncertainty/summary.json`
+- `artifacts/evac_uncertainty/summary.md`

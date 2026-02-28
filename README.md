@@ -57,6 +57,8 @@ Supported distribution modes:
   - 192-agent bottleneck scenarios (uniform and age-mix variants)
 - Added adaptive-transition validation script:
   - `examples/example9_adaptive_transition_validation.py` (compares round-robin vs adaptive).
+- Added native Monte-Carlo uncertainty analysis script:
+  - `scripts/evac_uncertainty_cli.py` (P50/P95, throughput, hotspots via `jupedsim-cli`).
 - Added docs:
   - `examples/xml/README_distribution.md` for distribution options
   - `examples/xml/README_transition_validation.md` for multi-exit transition validation
