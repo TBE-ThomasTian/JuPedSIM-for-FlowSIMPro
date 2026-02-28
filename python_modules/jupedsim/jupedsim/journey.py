@@ -11,7 +11,7 @@ class Transition:
     This type describes how a agent will proceed after completing its stage.
     This effectively describes the set of outbound edges for a stage.
 
-    There are 3 types of transitions currently available:
+    There are 4 types of transitions currently available:
 
     * **Fixed transitions:** On completion of this transitions stage all agents
       will proceed to the specified next stage.
@@ -26,6 +26,11 @@ class Transition:
       proceed towards the currently least targeted amongst the specified choices.
       The number of "targeting" agents is the amount of agents currently moving
       towards this stage. This includes agents from different journeys.
+
+    * **Adaptive transition:** On completion of this stage agents choose among
+      candidate stages based on a weighted cost function (expected travel time,
+      current targeting load, optional queue load), optionally with decision
+      interval and hysteresis to avoid oscillation.
     """
 
     def __init__(self, backing) -> None:
@@ -77,6 +82,46 @@ class Transition:
 
         """
         return Transition(py_jps.create_least_targeted_transition(stage_ids))
+
+    @staticmethod
+    def create_adaptive_transition(
+        stage_ids: list[int],
+        *,
+        expected_time_weight: float = 1.0,
+        density_weight: float = 1.0,
+        queue_weight: float = 0.0,
+        switch_penalty: float = 0.0,
+        decision_interval: int = 1,
+        reconsideration_threshold: float = 0.0,
+    ) -> "Transition":
+        """Create an adaptive transition.
+
+        Chooses among `stage_ids` by minimizing a weighted cost:
+        expected travel time + density load + queue load + optional switching penalty.
+        The previous choice can be held for `decision_interval` calls, and
+        `reconsideration_threshold` can suppress marginal switch decisions.
+
+        Arguments:
+            stage_ids: candidate stage ids.
+            expected_time_weight: weight for estimated travel time term.
+            density_weight: weight for current stage targeting load.
+            queue_weight: weight for queue-like occupancy terms.
+            switch_penalty: extra cost if the selected stage differs from previous choice.
+            decision_interval: reevaluate every N transition calls per agent (>= 1).
+            reconsideration_threshold: minimum advantage needed before switching.
+
+        """
+        return Transition(
+            py_jps.create_adaptive_transition(
+                stage_ids=stage_ids,
+                expected_time_weight=expected_time_weight,
+                density_weight=density_weight,
+                queue_weight=queue_weight,
+                switch_penalty=switch_penalty,
+                decision_interval=decision_interval,
+                reconsideration_threshold=reconsideration_threshold,
+            )
+        )
 
     @staticmethod
     def create_none_transition() -> "Transition":

@@ -501,3 +501,57 @@ def test_agent_can_not_be_added_outside_geometry():
                 stage_id=exit_id,
             )
         )
+
+
+def test_adaptive_transition_can_distribute_agents_to_multiple_exits():
+    simulation = jps.Simulation(
+        model=jps.CollisionFreeSpeedModel(),
+        geometry=[(0, 0), (50, 0), (50, 20), (0, 20)],
+    )
+    decision = simulation.add_waypoint_stage((10, 10), 0.8)
+    exit_top = simulation.add_exit_stage(
+        [(49, 14), (50, 14), (50, 18), (49, 18)]
+    )
+    exit_bottom = simulation.add_exit_stage(
+        [(49, 2), (50, 2), (50, 6), (49, 6)]
+    )
+
+    journey = jps.JourneyDescription([decision, exit_top, exit_bottom])
+    journey.set_transition_for_stage(
+        decision,
+        jps.Transition.create_adaptive_transition(
+            [exit_top, exit_bottom],
+            expected_time_weight=0.0,
+            density_weight=1.0,
+            queue_weight=0.0,
+            switch_penalty=0.0,
+            decision_interval=1,
+            reconsideration_threshold=0.0,
+        ),
+    )
+    journey_id = simulation.add_journey(journey)
+
+    params = jps.CollisionFreeSpeedModelAgentParameters(
+        journey_id=journey_id,
+        stage_id=decision,
+        radius=0.19,
+        desired_speed=1.2,
+        time_gap=1.0,
+    )
+    for idx in range(30):
+        params.position = (2 + 0.4 * (idx % 10), 6 + 0.8 * (idx // 10))
+        simulation.add_agent(params)
+
+    chosen_exit_by_agent = {}
+    while simulation.agent_count() > 0 and simulation.iteration_count() < 8000:
+        for agent in simulation.agents():
+            if agent.id not in chosen_exit_by_agent and agent.stage_id in (
+                exit_top,
+                exit_bottom,
+            ):
+                chosen_exit_by_agent[agent.id] = agent.stage_id
+        simulation.iterate()
+
+    assert simulation.agent_count() == 0
+    assert exit_top in chosen_exit_by_agent.values()
+    assert exit_bottom in chosen_exit_by_agent.values()

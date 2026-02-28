@@ -150,6 +150,28 @@ Journey::ID Simulation::AddJourney(const std::map<BaseStage::ID, TransitionDescr
                                     });
 
                                 return std::make_unique<LeastTargetedTransition>(candidates);
+                            },
+                            [this](const AdaptiveTransitionDescription& d)
+                                -> std::unique_ptr<Transition> {
+                                std::vector<BaseStage*> candidates{};
+                                candidates.reserve(d.TargetCandidates().size());
+
+                                std::transform(
+                                    std::begin(d.TargetCandidates()),
+                                    std::end(d.TargetCandidates()),
+                                    std::back_inserter(candidates),
+                                    [this](auto const& id) -> BaseStage* {
+                                        return _stageManager.Stage(id);
+                                    });
+
+                                return std::make_unique<AdaptiveTransition>(
+                                    candidates,
+                                    d.ExpectedTimeWeight(),
+                                    d.DensityWeight(),
+                                    d.QueueWeight(),
+                                    d.SwitchPenalty(),
+                                    d.DecisionInterval(),
+                                    d.ReconsiderationThreshold());
                             }},
                         desc)}};
         });

@@ -53,6 +53,8 @@ Supported distribution modes:
   - ramp scenario
   - multiple distribution-mode examples
   - 192-agent bottleneck scenarios (uniform and age-mix variants)
+- Added adaptive-transition validation script:
+  - `examples/example9_adaptive_transition_validation.py` (compares round-robin vs adaptive).
 - Added docs:
   - `examples/xml/README_distribution.md` for distribution options
   - `examples/xml/jsp_format.md` for binary JSP v1 layout.
