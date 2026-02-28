@@ -26,9 +26,9 @@ For the original project documentation and upstream development, see the
   - `jupedsim.StairStage` in `__init__`.
   - `jupedsim.RampStage` in `__init__`.
 
-### 2) Native XML CLI (`jupedsim-cli`)
+### 2) Native XML CLI (`jupedsim`)
 
-- Added optional native executable `jupedsim-cli`.
+- Added optional native executable `jupedsim`.
 - Supports XML scenarios with:
   - geometry and single-exit mode (`<exit>`)
   - multi-exit decision mode (`<decision>` + `<exits mode="...">`)
@@ -58,7 +58,7 @@ Supported distribution modes:
 - Added adaptive-transition validation script:
   - `examples/example9_adaptive_transition_validation.py` (compares round-robin vs adaptive).
 - Added native Monte-Carlo uncertainty analysis script:
-  - `scripts/evac_uncertainty_cli.py` (P50/P95, throughput, hotspots via `jupedsim-cli`).
+  - `scripts/evac_uncertainty_cli.py` (P50/P95, throughput, hotspots via `jupedsim`).
 - Added docs:
   - `examples/xml/README_distribution.md` for distribution options
   - `examples/xml/README_transition_validation.md` for multi-exit transition validation
@@ -86,10 +86,10 @@ If needed, set `-DLIBDEFLATE_ROOT=/path/to/libdeflate`.
 ## CLI usage examples
 
 ```bash
-./build/bin/jupedsim-cli examples/xml/minimal_scenario.xml \
+./build/bin/jupedsim examples/xml/minimal_scenario.xml \
   --out-jsp examples/xml/minimal_scenario.jsp
 
-./build/bin/jupedsim-cli examples/xml/distribution_by_number.xml \
+./build/bin/jupedsim examples/xml/distribution_by_number.xml \
   --out-jsp examples/xml/distribution_by_number.jsp \
   --every-nth-frame 2 \
   --compression-level 6

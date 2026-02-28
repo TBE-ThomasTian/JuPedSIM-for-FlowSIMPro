@@ -1,6 +1,6 @@
 # JuPedSim XML Distribution Modes (CLI)
 
-Diese README beschreibt die neuen XML-Optionen in `jupedsim-cli`, um Startpositionen automatisch zu streuen.
+Diese README beschreibt die neuen XML-Optionen in `jupedsim`, um Startpositionen automatisch zu streuen.
 
 ## Kurzüberblick
 
@@ -105,6 +105,5 @@ Siehe in diesem Ordner:
 ## CLI-Aufruf
 
 ```bash
-./build/bin/jupedsim-cli examples/xml/distribution_by_number.xml --out-jsp examples/xml/distribution_by_number.jsp
+./build/bin/jupedsim examples/xml/distribution_by_number.xml --out-jsp examples/xml/distribution_by_number.jsp
 ```
-

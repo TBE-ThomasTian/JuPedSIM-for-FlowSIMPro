@@ -1,6 +1,6 @@
 # JSP Trajectory Format (v1)
 
-Binary little-endian format produced by `jupedsim-cli` with deflate-compressed
+Binary little-endian format produced by `jupedsim` with deflate-compressed
 frame payloads (libdeflate).
 
 ## Header (52 bytes)

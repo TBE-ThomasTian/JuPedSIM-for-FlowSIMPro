@@ -57,17 +57,17 @@ class RunResult:
 
 def parse_args() -> argparse.Namespace:
     parser = argparse.ArgumentParser(
-        description="Run Monte-Carlo evacuation uncertainty analysis via jupedsim-cli"
+        description="Run Monte-Carlo evacuation uncertainty analysis via jupedsim XML CLI"
     )
     parser.add_argument(
         "--scenario",
         required=True,
-        help="Input XML scenario for jupedsim-cli",
+        help="Input XML scenario for jupedsim XML CLI",
     )
     parser.add_argument(
         "--cli",
-        default="build/bin/jupedsim-cli",
-        help="Path to jupedsim-cli binary",
+        default="build/bin/jupedsim",
+        help="Path to jupedsim binary",
     )
     parser.add_argument(
         "--runs",
@@ -115,7 +115,7 @@ def parse_args() -> argparse.Namespace:
         "--max-iterations",
         type=int,
         default=None,
-        help="Optional override passed to jupedsim-cli",
+        help="Optional override passed to jupedsim",
     )
     parser.add_argument(
         "--cell-size",
@@ -317,7 +317,7 @@ def analyze_jsp(
 def parse_cli_summary(stdout: str) -> tuple[int, float, int]:
     match = CLI_SUMMARY_RE.search(stdout)
     if not match:
-        raise RuntimeError("Could not parse jupedsim-cli summary line")
+        raise RuntimeError("Could not parse jupedsim summary line")
     iterations = int(match.group("iterations"))
     elapsed_time = float(match.group("elapsed"))
     remaining = int(match.group("remaining"))

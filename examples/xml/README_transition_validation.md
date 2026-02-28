@@ -1,7 +1,7 @@
 # JuPedSim XML Multi-Exit Transition Validation
 
 Dieses Dokument beschreibt ein natives (kein Python) Validierungs-Setup fuer
-`jupedsim-cli` mit XML-Szenarien.
+`jupedsim` mit XML-Szenarien.
 
 ## Vergleichsszenarien
 
@@ -39,14 +39,14 @@ Hinweise:
 ## Lauf mit nativer CLI
 
 ```bash
-./build/bin/jupedsim-cli examples/xml/round_robin_multi_exit_validation.xml \
+./build/bin/jupedsim examples/xml/round_robin_multi_exit_validation.xml \
   --out-jsp /tmp/round_robin_multi_exit_validation.jsp
 
-./build/bin/jupedsim-cli examples/xml/adaptive_multi_exit_validation.xml \
+./build/bin/jupedsim examples/xml/adaptive_multi_exit_validation.xml \
   --out-jsp /tmp/adaptive_multi_exit_validation.jsp
 ```
 
-`jupedsim-cli` gibt am Ende `iterations=...` aus. Diese Zahl kann direkt fuer
+`jupedsim` gibt am Ende `iterations=...` aus. Diese Zahl kann direkt fuer
 einen A/B-Vergleich verwendet werden.
 
 Beispiel aus diesem Repo (Stand dieser Konfiguration):
@@ -62,7 +62,7 @@ P50/P95, Exit-Throughput und Hotspots):
 ```bash
 python3 scripts/evac_uncertainty_cli.py \
   --scenario examples/xml/adaptive_multi_exit_validation.xml \
-  --cli build/bin/jupedsim-cli \
+  --cli build/bin/jupedsim \
   --runs 20 \
   --output-dir artifacts/evac_uncertainty
 ```

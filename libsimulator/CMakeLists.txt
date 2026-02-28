@@ -173,6 +173,7 @@ if(BUILD_XML_CLI)
     add_executable(jupedsim-cli
         cli/jupedsim_cli.cpp
     )
+    set_target_properties(jupedsim-cli PROPERTIES OUTPUT_NAME jupedsim)
 
     if(LIBDEFLATE_INCLUDE_DIR)
         target_include_directories(jupedsim-cli PRIVATE

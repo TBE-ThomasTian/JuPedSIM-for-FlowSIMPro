@@ -1251,7 +1251,7 @@ ScenarioConfig ParseScenarioConfig(const std::string& path)
         scenario.get<std::string>("model.<xmlattr>.type", "collision_free_speed");
     if(modelType != "collision_free_speed") {
         throw std::runtime_error(
-            "Only model type 'collision_free_speed' is supported by jupedsim-cli");
+            "Only model type 'collision_free_speed' is supported by jupedsim");
     }
 
     config.strengthNeighborRepulsion = scenario.get<double>(
