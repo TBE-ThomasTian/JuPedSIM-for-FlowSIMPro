@@ -83,6 +83,43 @@ cmake --build build -j
 `BUILD_XML_CLI=ON` requires `libdeflate` (e.g. system `libdeflate-dev` package).
 If needed, set `-DLIBDEFLATE_ROOT=/path/to/libdeflate`.
 
+### Build standalone Linux binaries (no Python on target)
+
+For helper scripts, you can create one-file Linux executables with PyInstaller.
+
+```bash
+python3 -m pip install pyinstaller
+scripts/build_standalone_linux.sh
+```
+
+This builds:
+
+- `build/standalone/bin/evac-uncertainty-cli`
+
+To also package `dxf2wkt` (requires `ezdxf`, `geopandas`, `matplotlib`, `numpy`, `shapely`, `typer`, `rich` on the build machine):
+
+```bash
+scripts/build_standalone_linux.sh --with-dxf2wkt
+```
+
+### Build standalone Windows binaries (no Python on target)
+
+On Windows, run:
+
+```powershell
+python -m pip install pyinstaller
+powershell -ExecutionPolicy Bypass -File scripts/build_standalone_windows.ps1
+```
+
+To also package `dxf2wkt.exe`:
+
+```powershell
+powershell -ExecutionPolicy Bypass -File scripts/build_standalone_windows.ps1 -WithDxf2wkt
+```
+
+Compatibility note: build on a Linux distro with an equal or older glibc than your deployment target.
+For `.exe`, build on Windows (cross-compiling Linux -> Windows is not supported by this setup).
+
 ## CLI usage examples
 
 ```bash
