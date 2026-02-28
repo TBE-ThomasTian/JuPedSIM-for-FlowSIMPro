@@ -54,6 +54,17 @@ public:
                         d.waitingTime,
                         d.timeStep);
                 },
+                [](const RampDescription& d) -> std::unique_ptr<BaseStage> {
+                    return std::make_unique<Ramp>(
+                        d.position,
+                        d.distance,
+                        d.length,
+                        d.ascending,
+                        d.upSpeedFactor,
+                        d.downSpeedFactor,
+                        d.waitingTime,
+                        d.timeStep);
+                },
                 [](const DirectSteeringDescription&) -> std::unique_ptr<BaseStage> {
                     return std::make_unique<DirectSteering>();
                 }},
@@ -80,6 +91,9 @@ public:
         stage->DecreaseTargeting();
         if(auto* stair = dynamic_cast<Stair*>(stage); stair != nullptr) {
             stair->ForgetAgent(agentId);
+        }
+        if(auto* ramp = dynamic_cast<Ramp*>(stage); ramp != nullptr) {
+            ramp->ForgetAgent(agentId);
         }
     }
 

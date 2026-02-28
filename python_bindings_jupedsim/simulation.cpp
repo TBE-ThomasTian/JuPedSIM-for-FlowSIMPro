@@ -82,6 +82,38 @@ void init_simulation(py::module_& m)
             py::arg("waiting_time") = 0.0,
             py::arg("time_step") = 0.01)
         .def(
+            "add_ramp_stage",
+            [](Simulation& sim,
+               std::tuple<double, double> position,
+               double distance,
+               double length,
+               bool ascending,
+               double upSpeedFactor,
+               double downSpeedFactor,
+               double waitingTime,
+               double timeStep) {
+                return sim.AddStage(RampDescription{
+                                      .position = intoPoint(position),
+                                      .distance = distance,
+                                      .length = length,
+                                      .ascending = ascending,
+                                      .upSpeedFactor = upSpeedFactor,
+                                      .downSpeedFactor = downSpeedFactor,
+                                      .waitingTime = waitingTime,
+                                      .timeStep = timeStep,
+                                  })
+                    .getID();
+            },
+            py::kw_only(),
+            py::arg("position"),
+            py::arg("distance") = 0.6,
+            py::arg("length"),
+            py::arg("ascending") = true,
+            py::arg("up_speed_factor") = 0.6,
+            py::arg("down_speed_factor") = 1.0,
+            py::arg("waiting_time") = 0.0,
+            py::arg("time_step") = 0.01)
+        .def(
             "add_direct_steering_stage",
             [](Simulation& sim) { return sim.AddStage(DirectSteeringDescription{}).getID(); })
         .def(

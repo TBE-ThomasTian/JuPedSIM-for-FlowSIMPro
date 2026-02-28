@@ -93,6 +93,12 @@ public:
     StairProxy(Simulation* simulation_, BaseStage* stage_) : BaseProxy(simulation_, stage_) {}
 };
 
+class RampProxy : public BaseProxy
+{
+public:
+    RampProxy(Simulation* simulation_, BaseStage* stage_) : BaseProxy(simulation_, stage_) {}
+};
+
 class DirectSteeringProxy : public BaseProxy
 {
 public:
@@ -107,6 +113,7 @@ using StageProxy = std::variant<
     NotifiableQueueProxy,
     ExitProxy,
     StairProxy,
+    RampProxy,
     DirectSteeringProxy>;
 
 class BaseStage
@@ -359,6 +366,36 @@ public:
         double waitingTime_,
         double timeStep_);
     ~Stair() override = default;
+    bool IsCompleted(const GenericAgent& agent) override;
+    Point Target(const GenericAgent& agent) override;
+    StageProxy Proxy(Simulation* simulation_) override;
+    Point Position() const { return position; };
+    void ForgetAgent(GenericAgent::ID agentId) { remainingIterations.erase(agentId); }
+};
+
+class Ramp : public BaseStage
+{
+    Point position;
+    double distance;
+    double length;
+    bool ascending;
+    double upSpeedFactor;
+    double downSpeedFactor;
+    double waitingTime;
+    double timeStep;
+    std::unordered_map<GenericAgent::ID, uint64_t> remainingIterations{};
+
+public:
+    Ramp(
+        Point position_,
+        double distance_,
+        double length_,
+        bool ascending_,
+        double upSpeedFactor_,
+        double downSpeedFactor_,
+        double waitingTime_,
+        double timeStep_);
+    ~Ramp() override = default;
     bool IsCompleted(const GenericAgent& agent) override;
     Point Target(const GenericAgent& agent) override;
     StageProxy Proxy(Simulation* simulation_) override;

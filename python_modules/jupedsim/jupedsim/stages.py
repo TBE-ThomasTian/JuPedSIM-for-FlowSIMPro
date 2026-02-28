@@ -164,3 +164,21 @@ class StairStage:
             Number of agents currently targeting this stage.
         """
         return self._obj.count_targeting()
+
+
+class RampStage:
+    """Models a ramp traversal stage.
+
+    Agents move to the ramp entry point, then remain in this stage for a
+    traversal time that can differ between ascending and descending movement.
+    """
+
+    def __init__(self, backing):
+        self._obj = backing
+
+    def count_targeting(self):
+        """
+        Returns:
+            Number of agents currently targeting this stage.
+        """
+        return self._obj.count_targeting()

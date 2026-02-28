@@ -335,3 +335,84 @@ StageProxy Stair::Proxy(Simulation* simulation_)
 {
     return StairProxy(simulation_, this);
 }
+
+////////////////////////////////////////////////////////////////////////////////
+/// Ramp
+////////////////////////////////////////////////////////////////////////////////
+
+Ramp::Ramp(
+    Point position_,
+    double distance_,
+    double length_,
+    bool ascending_,
+    double upSpeedFactor_,
+    double downSpeedFactor_,
+    double waitingTime_,
+    double timeStep_)
+    : position(position_)
+    , distance(distance_)
+    , length(length_)
+    , ascending(ascending_)
+    , upSpeedFactor(upSpeedFactor_)
+    , downSpeedFactor(downSpeedFactor_)
+    , waitingTime(waitingTime_)
+    , timeStep(timeStep_)
+{
+    if(distance <= 0.0) {
+        throw SimulationError("Ramp distance must be > 0.");
+    }
+    if(length < 0.0) {
+        throw SimulationError("Ramp length must be >= 0.");
+    }
+    if(upSpeedFactor <= 0.0) {
+        throw SimulationError("Ramp upSpeedFactor must be > 0.");
+    }
+    if(downSpeedFactor <= 0.0) {
+        throw SimulationError("Ramp downSpeedFactor must be > 0.");
+    }
+    if(waitingTime < 0.0) {
+        throw SimulationError("Ramp waitingTime must be >= 0.");
+    }
+    if(timeStep <= 0.0) {
+        throw SimulationError("Ramp timeStep must be > 0.");
+    }
+}
+
+bool Ramp::IsCompleted(const GenericAgent& agent)
+{
+    if(const auto iter = remainingIterations.find(agent.id); iter != std::end(remainingIterations)) {
+        if(iter->second <= 1) {
+            remainingIterations.erase(iter);
+            return true;
+        }
+        --(iter->second);
+        return false;
+    }
+
+    const auto actual_distance = (agent.pos - position).Norm();
+    if(actual_distance > distance) {
+        return false;
+    }
+
+    const double speedFactor = ascending ? upSpeedFactor : downSpeedFactor;
+    const double desiredSpeed = DesiredSpeedFromAgent(agent);
+    const double effectiveSpeed = std::max(0.1, desiredSpeed * speedFactor);
+    const double traversalTime = (length / effectiveSpeed) + waitingTime;
+    if(traversalTime <= 0.0) {
+        return true;
+    }
+
+    const auto requiredIterations = static_cast<uint64_t>(std::ceil(traversalTime / timeStep));
+    remainingIterations.emplace(agent.id, std::max<uint64_t>(1, requiredIterations));
+    return false;
+}
+
+Point Ramp::Target(const GenericAgent&)
+{
+    return position;
+}
+
+StageProxy Ramp::Proxy(Simulation* simulation_)
+{
+    return RampProxy(simulation_, this);
+}

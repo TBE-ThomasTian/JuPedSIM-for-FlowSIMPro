@@ -195,6 +195,11 @@ BaseStage::ID Simulation::AddStage(const StageDescription stageDescription)
                     throw SimulationError("Stair point {} not inside walkable area", d.position);
                 }
             },
+            [this](const RampDescription& d) -> void {
+                if(!this->_geometry->InsideGeometry(d.position)) {
+                    throw SimulationError("Ramp point {} not inside walkable area", d.position);
+                }
+            },
             [](const DirectSteeringDescription&) -> void {
 
             }},
@@ -428,6 +433,10 @@ void Simulation::ValidateGeometry(const std::unique_ptr<CollisionGeometry>& geom
                 }
             } else if(auto stair = dynamic_cast<Stair*>(node.stage); stair != nullptr) {
                 if(!geometry->InsideGeometry(stair->Position())) {
+                    faultyStages.push_back(stageId);
+                }
+            } else if(auto ramp = dynamic_cast<Ramp*>(node.stage); ramp != nullptr) {
+                if(!geometry->InsideGeometry(ramp->Position())) {
                     faultyStages.push_back(stageId);
                 }
             }

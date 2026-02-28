@@ -125,7 +125,17 @@ struct ScenarioConfig {
         double speedFactor{0.6};
         double waitingTime{0.0};
     };
+    struct RampConfig {
+        Point position{};
+        double distance{0.6};
+        double length{5.0};
+        bool ascending{true};
+        double upSpeedFactor{0.6};
+        double downSpeedFactor{1.0};
+        double waitingTime{0.0};
+    };
     std::optional<StairConfig> stair{};
+    std::optional<RampConfig> ramp{};
     std::vector<AgentConfig> agents{};
     std::optional<AgentDistributionConfig> distribution{};
     double strengthNeighborRepulsion{8.0};
@@ -210,6 +220,9 @@ void PrintUsage(const char* program)
         "    <exit><vertex x=\"...\" y=\"...\"/>...</exit>\n"
         "    <stair x=\"...\" y=\"...\" length=\"8.0\" distance=\"0.6\"\n"
         "           speed_factor=\"0.6\" waiting_time=\"0.0\"/> <!-- optional -->\n"
+        "    <ramp x=\"...\" y=\"...\" length=\"10.0\" distance=\"0.6\" ascending=\"true\"\n"
+        "          up_speed_factor=\"0.6\" down_speed_factor=\"1.0\" waiting_time=\"0.0\"/>\n"
+        "          <!-- optional, use either <stair> or <ramp> -->\n"
         "    <agents>\n"
         "      <agent x=\"1\" y=\"1\" radius=\"0.2\" time_gap=\"1.0\" desired_speed=\"1.2\"\n"
         "             age_group=\"young|adult|elderly\" avatar_hint=\"young|adult|grandpa|grandma\"/>\n"
@@ -259,6 +272,19 @@ std::string ToLowerAscii(std::string value)
         value.begin(),
         [](unsigned char c) { return static_cast<char>(std::tolower(c)); });
     return value;
+}
+
+bool ParseBool(const std::string& value, const std::string& name)
+{
+    const auto v = ToLowerAscii(value);
+    if(v == "true" || v == "1" || v == "yes" || v == "on") {
+        return true;
+    }
+    if(v == "false" || v == "0" || v == "no" || v == "off") {
+        return false;
+    }
+    throw std::runtime_error(
+        "Invalid boolean for " + name + ": '" + value + "' (expected true/false)");
 }
 
 uint8_t AgeGroupCodeFromString(const std::string& value)
@@ -1223,6 +1249,43 @@ ScenarioConfig ParseScenarioConfig(const std::string& path)
         }
         config.stair = stair;
     }
+    if(const auto rampNodeOpt = scenario.get_child_optional("ramp"); rampNodeOpt) {
+        ScenarioConfig::RampConfig ramp{};
+        const auto& rampNode = *rampNodeOpt;
+        ramp.position = ParsePoint(rampNode, "scenario.ramp");
+        ramp.distance = rampNode.get<double>("<xmlattr>.distance", ramp.distance);
+        ramp.length = rampNode.get<double>("<xmlattr>.length", ramp.length);
+        ramp.upSpeedFactor =
+            rampNode.get<double>("<xmlattr>.up_speed_factor", ramp.upSpeedFactor);
+        ramp.downSpeedFactor =
+            rampNode.get<double>("<xmlattr>.down_speed_factor", ramp.downSpeedFactor);
+        ramp.waitingTime =
+            rampNode.get<double>("<xmlattr>.waiting_time", ramp.waitingTime);
+        if(const auto asc = rampNode.get_optional<std::string>("<xmlattr>.ascending"); asc) {
+            ramp.ascending = ParseBool(*asc, "scenario.ramp.ascending");
+        }
+
+        if(ramp.distance <= 0.0) {
+            throw std::runtime_error("scenario.ramp.distance must be > 0");
+        }
+        if(ramp.length < 0.0) {
+            throw std::runtime_error("scenario.ramp.length must be >= 0");
+        }
+        if(ramp.upSpeedFactor <= 0.0) {
+            throw std::runtime_error("scenario.ramp.up_speed_factor must be > 0");
+        }
+        if(ramp.downSpeedFactor <= 0.0) {
+            throw std::runtime_error("scenario.ramp.down_speed_factor must be > 0");
+        }
+        if(ramp.waitingTime < 0.0) {
+            throw std::runtime_error("scenario.ramp.waiting_time must be >= 0");
+        }
+        config.ramp = ramp;
+    }
+
+    if(config.stair.has_value() && config.ramp.has_value()) {
+        throw std::runtime_error("Use either <stair> or <ramp>, not both in one scenario");
+    }
 
     auto parseExplicitAgent = [&](const pt::ptree& node, const std::string& context) {
         AgentConfig agent{};
@@ -1631,6 +1694,20 @@ int main(int argc, char** argv)
             });
             journeyStages.emplace(stairStage, FixedTransitionDescription(exitStage));
             initialStage = stairStage;
+        } else if(config.ramp.has_value()) {
+            const auto& ramp = *config.ramp;
+            const auto rampStage = simulation.AddStage(RampDescription{
+                .position = ramp.position,
+                .distance = ramp.distance,
+                .length = ramp.length,
+                .ascending = ramp.ascending,
+                .upSpeedFactor = ramp.upSpeedFactor,
+                .downSpeedFactor = ramp.downSpeedFactor,
+                .waitingTime = ramp.waitingTime,
+                .timeStep = config.dt,
+            });
+            journeyStages.emplace(rampStage, FixedTransitionDescription(exitStage));
+            initialStage = rampStage;
         }
         const auto journeyId = simulation.AddJourney(journeyStages);
 

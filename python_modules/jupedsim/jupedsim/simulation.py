@@ -34,6 +34,7 @@ from jupedsim.serialization import TrajectoryWriter
 from jupedsim.stages import (
     ExitStage,
     NotifiableQueueStage,
+    RampStage,
     StairStage,
     WaitingSetStage,
     WaypointStage,
@@ -271,6 +272,51 @@ class Simulation:
             distance=distance,
             length=length,
             speed_factor=speed_factor,
+            waiting_time=waiting_time,
+            time_step=time_step,
+        )
+
+    def add_ramp_stage(
+        self,
+        *,
+        position: tuple[float, float],
+        length: float,
+        ascending: bool = True,
+        distance: float = 0.6,
+        up_speed_factor: float = 0.6,
+        down_speed_factor: float = 1.0,
+        waiting_time: float = 0.0,
+        time_step: float = 0.01,
+    ) -> int:
+        """Add a ramp traversal stage to the simulation.
+
+        Agents first walk to `position`. Once they are within `distance`, the
+        stage holds them for a traversal time:
+        ``t = length / (v0 * speed_factor) + waiting_time``.
+
+        Depending on `ascending`, the stage uses either `up_speed_factor` or
+        `down_speed_factor`.
+
+        Arguments:
+            position: Entry point of the ramp.
+            length: Effective walking length of the ramp in meters.
+            ascending: If True, uses `up_speed_factor`, otherwise `down_speed_factor`.
+            distance: Radius around `position` considered as reached.
+            up_speed_factor: Multiplier for desired speed when ascending.
+            down_speed_factor: Multiplier for desired speed when descending.
+            waiting_time: Additional fixed delay in seconds.
+            time_step: Time step used by the stage for the internal timer.
+
+        Returns:
+            Id of the added ramp stage.
+        """
+        return self._obj.add_ramp_stage(
+            position=position,
+            distance=distance,
+            length=length,
+            ascending=ascending,
+            up_speed_factor=up_speed_factor,
+            down_speed_factor=down_speed_factor,
             waiting_time=waiting_time,
             time_step=time_step,
         )
@@ -558,6 +604,8 @@ class Simulation:
                 return ExitStage(stage)
             case py_jps.StairProxy():
                 return StairStage(stage)
+            case py_jps.RampProxy():
+                return RampStage(stage)
             case py_jps.NotifiableQueueProxy():
                 return NotifiableQueueStage(stage)
             case py_jps.WaitingSetProxy():

@@ -7,24 +7,31 @@ For the original project documentation and upstream development, see the
 
 ## FlowSIMPro-specific changes
 
-### 1) Stair stage support (C++ core + Python API)
+### 1) Stair and ramp stage support (C++ core + Python API)
 
 - Added a new stage type: `Stair`.
+- Added a new stage type: `Ramp`.
 - Stair traversal time is modeled per agent as:
   `t = length / (desired_speed * speed_factor) + waiting_time`.
+- Ramp traversal time uses a direction-dependent speed factor:
+  `up_speed_factor` for ascending and `down_speed_factor` for descending.
 - Added geometry validation for stair positions (must be inside walkable area).
-- Added cleanup for removed agents so stair-internal state does not leak.
+- Added geometry validation for ramp positions (must be inside walkable area).
+- Added cleanup for removed agents so stair/ramp internal state does not leak.
 - Exposed in Python via:
   - `Simulation.add_stair_stage(...)`
+  - `Simulation.add_ramp_stage(...)`
   - `StairStage` proxy wrapper
+  - `RampStage` proxy wrapper
   - `jupedsim.StairStage` in `__init__`.
+  - `jupedsim.RampStage` in `__init__`.
 
 ### 2) Native XML CLI (`jupedsim-cli`)
 
 - Added optional native executable `jupedsim-cli`.
 - Supports XML scenarios with:
   - geometry and exit
-  - optional stair definition
+  - optional stair or ramp definition
   - explicit agents and/or automatic agent distribution.
 - Writes compressed `.jsp` trajectory files with frame index and optional per-agent metadata.
 - Compression uses `libdeflate`.
@@ -43,6 +50,7 @@ Supported distribution modes:
 - Added runnable XML scenarios in `examples/xml/`, including:
   - minimal scenarios
   - stair scenario
+  - ramp scenario
   - multiple distribution-mode examples
   - 192-agent bottleneck scenarios (uniform and age-mix variants)
 - Added docs:
@@ -80,7 +88,7 @@ If needed, set `-DLIBDEFLATE_ROOT=/path/to/libdeflate`.
   --compression-level 6
 ```
 
-## Python usage example (stair stage)
+## Python usage example (stair / ramp stage)
 
 ```python
 stair_stage = simulation.add_stair_stage(
@@ -90,6 +98,14 @@ stair_stage = simulation.add_stair_stage(
     speed_factor=0.6,
     waiting_time=0.0,
     time_step=0.01,
+)
+
+ramp_stage = simulation.add_ramp_stage(
+    position=(12.0, 5.0),
+    length=10.0,
+    ascending=True,
+    up_speed_factor=0.6,
+    down_speed_factor=1.0,
 )
 ```
 

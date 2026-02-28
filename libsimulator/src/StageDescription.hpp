@@ -36,10 +36,22 @@ struct StairDescription {
     double timeStep{0.01};
 };
 
+struct RampDescription {
+    Point position;
+    double distance{0.6};
+    double length{5.0};
+    bool ascending{true};
+    double upSpeedFactor{0.6};
+    double downSpeedFactor{1.0};
+    double waitingTime{0.0};
+    double timeStep{0.01};
+};
+
 using StageDescription = std::variant<
     DirectSteeringDescription,
     WaypointDescription,
     ExitDescription,
     NotifiableWaitingSetDescription,
     NotifiableQueueDescription,
-    StairDescription>;
+    StairDescription,
+    RampDescription>;

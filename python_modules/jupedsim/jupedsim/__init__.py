@@ -57,6 +57,7 @@ from jupedsim.sqlite_serialization import SqliteTrajectoryWriter
 from jupedsim.stages import (
     ExitStage,
     NotifiableQueueStage,
+    RampStage,
     StairStage,
     WaitingSetStage,
     WaitingSetState,
@@ -99,6 +100,7 @@ __all__ = [
     "RecordingAgent",
     "RecordingFrame",
     "RoutingEngine",
+    "RampStage",
     "Simulation",
     "SqliteTrajectoryWriter",
     "Trace",

@@ -30,5 +30,6 @@ void init_stage(py::module_& m)
         .def("count_targeting", &WaypointProxy::CountTargeting);
     py::class_<ExitProxy>(m, "ExitProxy").def("count_targeting", &ExitProxy::CountTargeting);
     py::class_<StairProxy>(m, "StairProxy").def("count_targeting", &StairProxy::CountTargeting);
+    py::class_<RampProxy>(m, "RampProxy").def("count_targeting", &RampProxy::CountTargeting);
     py::class_<DirectSteeringProxy>(m, "DirectSteeringProxy");
 }
