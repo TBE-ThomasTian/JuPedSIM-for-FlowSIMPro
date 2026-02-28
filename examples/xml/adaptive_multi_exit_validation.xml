@@ -1,0 +1,52 @@
+<scenario dt="0.02" max_iterations="20000">
+  <model
+    type="collision_free_speed"
+    strength_neighbor_repulsion="8.0"
+    range_neighbor_repulsion="0.1"
+    strength_geometry_repulsion="5.0"
+    range_geometry_repulsion="0.02" />
+
+  <geometry>
+    <walkable>
+      <vertex x="0.0" y="0.0" />
+      <vertex x="80.0" y="0.0" />
+      <vertex x="80.0" y="30.0" />
+      <vertex x="0.0" y="30.0" />
+    </walkable>
+  </geometry>
+
+  <decision x="20.0" y="15.0" distance="1.0" />
+
+  <exits
+    mode="adaptive"
+    expected_time_weight="3.0"
+    density_weight="0.1"
+    queue_weight="0.0"
+    switch_penalty="0.0"
+    decision_interval="1"
+    reconsideration_threshold="0.0">
+    <exit>
+      <vertex x="79.2" y="22.0" />
+      <vertex x="80.0" y="22.0" />
+      <vertex x="80.0" y="28.0" />
+      <vertex x="79.2" y="28.0" />
+    </exit>
+    <exit>
+      <vertex x="45.0" y="10.0" />
+      <vertex x="46.0" y="10.0" />
+      <vertex x="46.0" y="16.0" />
+      <vertex x="45.0" y="16.0" />
+    </exit>
+  </exits>
+
+  <agents>
+    <distribution
+      mode="by_number"
+      number_of_agents="120"
+      distance_to_agents="0.45"
+      distance_to_polygon="0.20"
+      seed="42">
+      <profile desired_speed="1.30" radius="0.20" time_gap="0.95" age_group="adult" avatar_hint="adult" weight="1.0" />
+    </distribution>
+  </agents>
+</scenario>

@@ -89,6 +89,13 @@ enum class DistributionMode {
     ByPercentage
 };
 
+enum class ExitTransitionMode {
+    Fixed,
+    RoundRobin,
+    LeastTargeted,
+    Adaptive
+};
+
 struct CircleSegmentConfig {
     double minRadius{0.0};
     double maxRadius{0.0};
@@ -117,7 +124,25 @@ struct ScenarioConfig {
     uint64_t maxIterations{10000};
     std::vector<Point> walkable{};
     std::vector<std::vector<Point>> obstacles{};
-    std::vector<Point> exitPolygon{};
+    std::optional<std::vector<Point>> exitPolygon{};
+    struct DecisionConfig {
+        Point position{};
+        double distance{0.8};
+    };
+    struct MultiExitConfig {
+        std::vector<std::vector<Point>> polygons{};
+        ExitTransitionMode transitionMode{ExitTransitionMode::Adaptive};
+        size_t fixedExitIndex{0};
+        std::vector<uint64_t> roundRobinWeights{};
+        double expectedTimeWeight{1.0};
+        double densityWeight{1.0};
+        double queueWeight{0.0};
+        double switchPenalty{0.0};
+        uint64_t decisionInterval{1};
+        double reconsiderationThreshold{0.0};
+    };
+    std::optional<DecisionConfig> decision{};
+    std::optional<MultiExitConfig> multiExit{};
     struct StairConfig {
         Point position{};
         double distance{0.6};
@@ -217,7 +242,16 @@ void PrintUsage(const char* program)
         "      <walkable><vertex x=\"0\" y=\"0\"/>...</walkable>\n"
         "      <obstacle>...</obstacle>  <!-- optional, repeatable -->\n"
         "    </geometry>\n"
-        "    <exit><vertex x=\"...\" y=\"...\"/>...</exit>\n"
+        "    <exit><vertex x=\"...\" y=\"...\"/>...</exit>  <!-- single exit mode -->\n"
+        "    <!-- OR multi-exit decision mode: -->\n"
+        "    <decision x=\"...\" y=\"...\" distance=\"0.8\"/>\n"
+        "    <exits mode=\"adaptive|least_targeted|round_robin|fixed\" fixed_index=\"0\"\n"
+        "           expected_time_weight=\"1.0\" density_weight=\"1.0\" queue_weight=\"0.0\"\n"
+        "           switch_penalty=\"0.0\" decision_interval=\"1\"\n"
+        "           reconsideration_threshold=\"0.0\">\n"
+        "      <exit weight=\"1\"><vertex x=\"...\" y=\"...\"/>...</exit>\n"
+        "      <exit weight=\"2\"><vertex x=\"...\" y=\"...\"/>...</exit>\n"
+        "    </exits>\n"
         "    <stair x=\"...\" y=\"...\" length=\"8.0\" distance=\"0.6\"\n"
         "           speed_factor=\"0.6\" waiting_time=\"0.0\"/> <!-- optional -->\n"
         "    <ramp x=\"...\" y=\"...\" length=\"10.0\" distance=\"0.6\" ascending=\"true\"\n"
@@ -285,6 +319,26 @@ bool ParseBool(const std::string& value, const std::string& name)
     }
     throw std::runtime_error(
         "Invalid boolean for " + name + ": '" + value + "' (expected true/false)");
+}
+
+ExitTransitionMode ParseExitTransitionMode(const std::string& value)
+{
+    const auto mode = ToLowerAscii(value);
+    if(mode == "fixed") {
+        return ExitTransitionMode::Fixed;
+    }
+    if(mode == "round_robin") {
+        return ExitTransitionMode::RoundRobin;
+    }
+    if(mode == "least_targeted") {
+        return ExitTransitionMode::LeastTargeted;
+    }
+    if(mode == "adaptive") {
+        return ExitTransitionMode::Adaptive;
+    }
+    throw std::runtime_error(
+        "Unknown exits transition mode '" + value +
+        "'. Supported: fixed, round_robin, least_targeted, adaptive");
 }
 
 uint8_t AgeGroupCodeFromString(const std::string& value)
@@ -1222,7 +1276,92 @@ ScenarioConfig ParseScenarioConfig(const std::string& path)
         }
     }
 
-    config.exitPolygon = ParsePolygon(scenario.get_child("exit"), "scenario.exit");
+    if(const auto singleExitNode = scenario.get_child_optional("exit"); singleExitNode) {
+        config.exitPolygon = ParsePolygon(*singleExitNode, "scenario.exit");
+    }
+
+    if(const auto decisionNodeOpt = scenario.get_child_optional("decision"); decisionNodeOpt) {
+        ScenarioConfig::DecisionConfig decision{};
+        const auto& decisionNode = *decisionNodeOpt;
+        decision.position = ParsePoint(decisionNode, "scenario.decision");
+        decision.distance =
+            decisionNode.get<double>("<xmlattr>.distance", decision.distance);
+        if(decision.distance <= 0.0) {
+            throw std::runtime_error("scenario.decision.distance must be > 0");
+        }
+        config.decision = decision;
+    }
+
+    if(const auto exitsNodeOpt = scenario.get_child_optional("exits"); exitsNodeOpt) {
+        ScenarioConfig::MultiExitConfig multiExit{};
+        const auto& exitsNode = *exitsNodeOpt;
+        multiExit.transitionMode = ParseExitTransitionMode(
+            exitsNode.get<std::string>("<xmlattr>.mode", "adaptive"));
+        multiExit.fixedExitIndex = static_cast<size_t>(
+            exitsNode.get<uint64_t>("<xmlattr>.fixed_index", multiExit.fixedExitIndex));
+        multiExit.expectedTimeWeight = exitsNode.get<double>(
+            "<xmlattr>.expected_time_weight",
+            multiExit.expectedTimeWeight);
+        multiExit.densityWeight =
+            exitsNode.get<double>("<xmlattr>.density_weight", multiExit.densityWeight);
+        multiExit.queueWeight =
+            exitsNode.get<double>("<xmlattr>.queue_weight", multiExit.queueWeight);
+        multiExit.switchPenalty =
+            exitsNode.get<double>("<xmlattr>.switch_penalty", multiExit.switchPenalty);
+        multiExit.decisionInterval =
+            exitsNode.get<uint64_t>("<xmlattr>.decision_interval", multiExit.decisionInterval);
+        multiExit.reconsiderationThreshold = exitsNode.get<double>(
+            "<xmlattr>.reconsideration_threshold",
+            multiExit.reconsiderationThreshold);
+
+        if(multiExit.expectedTimeWeight < 0.0 || multiExit.densityWeight < 0.0 ||
+           multiExit.queueWeight < 0.0 || multiExit.switchPenalty < 0.0) {
+            throw std::runtime_error(
+                "scenario.exits weights/penalty must be >= 0");
+        }
+        if(multiExit.decisionInterval == 0) {
+            throw std::runtime_error("scenario.exits.decision_interval must be > 0");
+        }
+        if(multiExit.reconsiderationThreshold < 0.0) {
+            throw std::runtime_error(
+                "scenario.exits.reconsideration_threshold must be >= 0");
+        }
+
+        for(const auto& [tag, node] : exitsNode) {
+            if(tag != "exit") {
+                continue;
+            }
+            multiExit.polygons.push_back(ParsePolygon(node, "scenario.exits.exit"));
+            const auto weight = node.get<uint64_t>("<xmlattr>.weight", 1);
+            if(weight == 0) {
+                throw std::runtime_error("scenario.exits.exit.weight must be > 0");
+            }
+            multiExit.roundRobinWeights.push_back(weight);
+        }
+
+        if(multiExit.polygons.size() < 2) {
+            throw std::runtime_error("scenario.exits requires at least 2 <exit/> entries");
+        }
+        if(multiExit.fixedExitIndex >= multiExit.polygons.size()) {
+            throw std::runtime_error(
+                "scenario.exits.fixed_index out of range");
+        }
+
+        config.multiExit = multiExit;
+    }
+
+    if(config.exitPolygon.has_value() && config.multiExit.has_value()) {
+        throw std::runtime_error("Use either <exit> or <exits>, not both");
+    }
+    if(!config.exitPolygon.has_value() && !config.multiExit.has_value()) {
+        throw std::runtime_error("Missing <exit> or <exits> in scenario");
+    }
+    if(config.multiExit.has_value() && !config.decision.has_value()) {
+        throw std::runtime_error("scenario.exits requires a <decision .../> element");
+    }
+    if(config.decision.has_value() && !config.multiExit.has_value()) {
+        throw std::runtime_error("<decision> is only valid together with <exits>");
+    }
 
     if(const auto stairNodeOpt = scenario.get_child_optional("stair"); stairNodeOpt) {
         ScenarioConfig::StairConfig stair{};
@@ -1678,10 +1817,65 @@ int main(int argc, char** argv)
 
         Simulation simulation(std::move(model), std::move(geometry), config.dt);
 
-        const auto exitStage = simulation.AddStage(ExitDescription{Polygon(config.exitPolygon)});
         std::map<BaseStage::ID, TransitionDescription> journeyStages{};
-        journeyStages.emplace(exitStage, NonTransitionDescription{});
-        BaseStage::ID initialStage = exitStage;
+        std::vector<BaseStage::ID> exitStages{};
+        if(config.exitPolygon.has_value()) {
+            const auto exitStage =
+                simulation.AddStage(ExitDescription{Polygon(*config.exitPolygon)});
+            journeyStages.emplace(exitStage, NonTransitionDescription{});
+            exitStages.push_back(exitStage);
+        } else if(config.multiExit.has_value()) {
+            for(const auto& polygon : config.multiExit->polygons) {
+                const auto exitStage = simulation.AddStage(ExitDescription{Polygon(polygon)});
+                journeyStages.emplace(exitStage, NonTransitionDescription{});
+                exitStages.push_back(exitStage);
+            }
+        } else {
+            throw std::runtime_error("Internal error: missing exit stage configuration");
+        }
+
+        BaseStage::ID downstreamStage = exitStages.front();
+        if(config.multiExit.has_value()) {
+            const auto& multiExit = *config.multiExit;
+            const auto& decision = *config.decision;
+            const auto decisionStage = simulation.AddStage(
+                WaypointDescription{decision.position, decision.distance});
+
+            TransitionDescription transition = NonTransitionDescription{};
+            switch(multiExit.transitionMode) {
+            case ExitTransitionMode::Fixed:
+                transition = FixedTransitionDescription(
+                    exitStages.at(multiExit.fixedExitIndex));
+                break;
+            case ExitTransitionMode::RoundRobin: {
+                std::vector<std::tuple<BaseStage::ID, uint64_t>> weights{};
+                weights.reserve(exitStages.size());
+                for(size_t idx = 0; idx < exitStages.size(); ++idx) {
+                    weights.emplace_back(exitStages[idx], multiExit.roundRobinWeights[idx]);
+                }
+                transition = RoundRobinTransitionDescription(weights);
+                break;
+            }
+            case ExitTransitionMode::LeastTargeted:
+                transition = LeastTargetedTransitionDescription(exitStages);
+                break;
+            case ExitTransitionMode::Adaptive:
+                transition = AdaptiveTransitionDescription(
+                    exitStages,
+                    multiExit.expectedTimeWeight,
+                    multiExit.densityWeight,
+                    multiExit.queueWeight,
+                    multiExit.switchPenalty,
+                    multiExit.decisionInterval,
+                    multiExit.reconsiderationThreshold);
+                break;
+            }
+
+            journeyStages.emplace(decisionStage, transition);
+            downstreamStage = decisionStage;
+        }
+
+        BaseStage::ID initialStage = downstreamStage;
         if(config.stair.has_value()) {
             const auto& stair = *config.stair;
             const auto stairStage = simulation.AddStage(StairDescription{
@@ -1692,7 +1886,7 @@ int main(int argc, char** argv)
                 .waitingTime = stair.waitingTime,
                 .timeStep = config.dt,
             });
-            journeyStages.emplace(stairStage, FixedTransitionDescription(exitStage));
+            journeyStages.emplace(stairStage, FixedTransitionDescription(downstreamStage));
             initialStage = stairStage;
         } else if(config.ramp.has_value()) {
             const auto& ramp = *config.ramp;
@@ -1706,7 +1900,7 @@ int main(int argc, char** argv)
                 .waitingTime = ramp.waitingTime,
                 .timeStep = config.dt,
             });
-            journeyStages.emplace(rampStage, FixedTransitionDescription(exitStage));
+            journeyStages.emplace(rampStage, FixedTransitionDescription(downstreamStage));
             initialStage = rampStage;
         }
         const auto journeyId = simulation.AddJourney(journeyStages);

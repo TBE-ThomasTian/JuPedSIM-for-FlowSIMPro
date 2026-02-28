@@ -30,7 +30,8 @@ For the original project documentation and upstream development, see the
 
 - Added optional native executable `jupedsim-cli`.
 - Supports XML scenarios with:
-  - geometry and exit
+  - geometry and single-exit mode (`<exit>`)
+  - multi-exit decision mode (`<decision>` + `<exits mode="...">`)
   - optional stair or ramp definition
   - explicit agents and/or automatic agent distribution.
 - Writes compressed `.jsp` trajectory files with frame index and optional per-agent metadata.
@@ -51,12 +52,14 @@ Supported distribution modes:
   - minimal scenarios
   - stair scenario
   - ramp scenario
+  - multi-exit adaptive/round-robin validation scenarios
   - multiple distribution-mode examples
   - 192-agent bottleneck scenarios (uniform and age-mix variants)
 - Added adaptive-transition validation script:
   - `examples/example9_adaptive_transition_validation.py` (compares round-robin vs adaptive).
 - Added docs:
   - `examples/xml/README_distribution.md` for distribution options
+  - `examples/xml/README_transition_validation.md` for multi-exit transition validation
   - `examples/xml/jsp_format.md` for binary JSP v1 layout.
 
 ## Building
