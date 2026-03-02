@@ -114,79 +114,16 @@ set_property(TARGET simulator PROPERTY INTERPROCEDURAL_OPTIMIZATION_DEBUG OFF)
 # jupedsim native XML CLI
 ################################################################################
 if(BUILD_XML_CLI)
-    set(LIBDEFLATE_ROOT "" CACHE PATH
-        "Optional root directory of libdeflate (source, build, or install prefix)")
-    set(_libdeflate_hints "")
-    if(LIBDEFLATE_ROOT)
-        list(APPEND _libdeflate_hints
-            "${LIBDEFLATE_ROOT}"
-            "${LIBDEFLATE_ROOT}/build"
-            "${LIBDEFLATE_ROOT}/lib"
-        )
-    endif()
-
-    if(_libdeflate_hints)
-        find_package(libdeflate CONFIG QUIET PATHS ${_libdeflate_hints} NO_DEFAULT_PATH)
-    else()
-        find_package(libdeflate CONFIG QUIET)
-    endif()
-
-    set(LIBDEFLATE_LINK_TARGET "")
-    if(TARGET libdeflate::libdeflate_static)
-        set(LIBDEFLATE_LINK_TARGET libdeflate::libdeflate_static)
-    elseif(TARGET libdeflate::libdeflate_shared)
-        set(LIBDEFLATE_LINK_TARGET libdeflate::libdeflate_shared)
-    endif()
-
-    if(NOT LIBDEFLATE_LINK_TARGET)
-        if(_libdeflate_hints)
-            find_path(LIBDEFLATE_INCLUDE_DIR
-                NAMES libdeflate.h
-                PATHS ${_libdeflate_hints}
-                PATH_SUFFIXES include .
-                NO_DEFAULT_PATH
-            )
-            find_library(LIBDEFLATE_LIBRARY
-                NAMES deflate libdeflate
-                PATHS ${_libdeflate_hints}
-                PATH_SUFFIXES lib lib64 build .
-                NO_DEFAULT_PATH
-            )
-        else()
-            find_path(LIBDEFLATE_INCLUDE_DIR
-                NAMES libdeflate.h
-            )
-            find_library(LIBDEFLATE_LIBRARY
-                NAMES deflate libdeflate
-            )
-        endif()
-
-        if(NOT LIBDEFLATE_INCLUDE_DIR OR NOT LIBDEFLATE_LIBRARY)
-            message(FATAL_ERROR
-                "BUILD_XML_CLI=ON requires libdeflate. "
-                "Set LIBDEFLATE_ROOT to your libdeflate folder (source/build/install), "
-                "or install system dev package (e.g. libdeflate-dev)."
-            )
-        endif()
-    endif()
-
     add_executable(jupedsim-cli
         cli/jupedsim_cli.cpp
     )
     set_target_properties(jupedsim-cli PROPERTIES OUTPUT_NAME jupedsim)
 
-    if(LIBDEFLATE_INCLUDE_DIR)
-        target_include_directories(jupedsim-cli PRIVATE
-            ${LIBDEFLATE_INCLUDE_DIR}
-        )
-    endif()
-
     target_link_libraries(jupedsim-cli PRIVATE
         simulator
         Boost::boost
         fmt::fmt
-        $<$<BOOL:${LIBDEFLATE_LINK_TARGET}>:${LIBDEFLATE_LINK_TARGET}>
-        $<$<BOOL:${LIBDEFLATE_LIBRARY}>:${LIBDEFLATE_LIBRARY}>
+        libdeflate::libdeflate_static
     )
 
     target_compile_options(jupedsim-cli PRIVATE

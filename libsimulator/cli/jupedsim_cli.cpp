@@ -20,6 +20,7 @@
 #include <cctype>
 #include <cstring>
 #include <cmath>
+#include <numbers>
 #include <exception>
 #include <filesystem>
 #include <fstream>
@@ -769,7 +770,7 @@ Point RandomPointInRing(
     std::mt19937_64& rng)
 {
     std::uniform_real_distribution<double> distRho(innerRadius * innerRadius, outerRadius * outerRadius);
-    std::uniform_real_distribution<double> distTheta(0.0, 2.0 * M_PI);
+    std::uniform_real_distribution<double> distTheta(0.0, 2.0 * std::numbers::pi_v<double>);
     const double rho = std::sqrt(distRho(rng));
     const double theta = distTheta(rng);
     return Point{center.x + rho * std::cos(theta), center.y + rho * std::sin(theta)};
@@ -863,7 +864,7 @@ std::vector<Point> DistributeUntilFilled(
             std::uniform_real_distribution<double> distRho(
                 spacingDistance * spacingDistance,
                 4.0 * spacingDistance * spacingDistance);
-            std::uniform_real_distribution<double> distTheta(0.0, 2.0 * M_PI);
+            std::uniform_real_distribution<double> distTheta(0.0, 2.0 * std::numbers::pi_v<double>);
             const double rho = std::sqrt(distRho(rng));
             const double theta = distTheta(rng);
             const Point candidate{
@@ -1007,7 +1008,8 @@ std::vector<AgentConfig> GenerateDistributedAgents(
             for(size_t segIdx = 0; segIdx < dist.circleSegments.size(); ++segIdx) {
                 const auto& segment = dist.circleSegments[segIdx];
                 const double ringArea =
-                    M_PI * (segment.maxRadius * segment.maxRadius - segment.minRadius * segment.minRadius);
+                    std::numbers::pi_v<double> *
+                    (segment.maxRadius * segment.maxRadius - segment.minRadius * segment.minRadius);
                 const BoundingBox ringBox{
                     .minX = center.x - segment.maxRadius,
                     .minY = center.y - segment.maxRadius,
