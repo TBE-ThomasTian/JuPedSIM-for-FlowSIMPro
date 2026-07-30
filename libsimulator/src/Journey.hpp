@@ -48,6 +48,9 @@ public:
         const std::vector<std::tuple<BaseStage::ID, uint64_t>>& weightedStages_)
         : weightedStages(weightedStages_)
     {
+        if(weightedStages.empty()) {
+            throw SimulationError("Round robin transition requires at least one target stage.");
+        }
         for(const auto& [stageId, _] : weightedStages) {
             if(stageId == BaseStage::ID::Invalid.getID()) {
                 throw SimulationError(
@@ -71,6 +74,9 @@ public:
     LeastTargetedTransitionDescription(std::vector<BaseStage::ID> targetCandidates_)
         : targetCandidates(std::move(targetCandidates_))
     {
+        if(targetCandidates.empty()) {
+            throw SimulationError("Least targeted transition requires at least one target stage.");
+        }
         for(const auto& stageId : targetCandidates) {
             if(stageId == BaseStage::ID::Invalid.getID()) {
                 throw SimulationError(
@@ -177,6 +183,9 @@ public:
     RoundRobinTransition(std::vector<std::tuple<BaseStage*, uint64_t>> weightedStages_)
         : weightedStages(std::move(weightedStages_))
     {
+        if(weightedStages.empty()) {
+            throw SimulationError("RoundRobinTransition requires at least one target stage.");
+        }
         for(auto const& [_, weight] : weightedStages) {
             if(weight == 0) {
                 throw SimulationError("RoundRobinTransition no weight may be zero.");
@@ -211,6 +220,9 @@ public:
     LeastTargetedTransition(std::vector<BaseStage*> targetCandidates_)
         : targetCandidates(std::move(targetCandidates_))
     {
+        if(targetCandidates.empty()) {
+            throw SimulationError("LeastTargetedTransition requires at least one target stage.");
+        }
     }
 
     BaseStage* NextStage(const GenericAgent&) override

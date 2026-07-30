@@ -40,12 +40,17 @@ namespace
 namespace fs = std::filesystem;
 namespace pt = boost::property_tree;
 
-constexpr uint32_t JSP_VERSION = 1;
+constexpr uint32_t JSP_VERSION = 2;
 constexpr uint32_t JSP_FLAG_DEFLATE = 1;
-constexpr uint32_t JSP_RECORD_SIZE = 24; // u64 agent_id + 4x f32
+constexpr uint32_t JSP_RECORD_SIZE = 28; // u64 agent_id + 4x f32 + u32 floor_id
 constexpr char JSP_META_MAGIC[4] = {'J', 'S', 'P', 'M'};
 constexpr uint32_t JSP_META_VERSION = 1;
 constexpr uint32_t JSP_META_RECORD_SIZE = 24; // u64 id + u8 age + u8 avatar + u16 + 3x f32
+// Optional trailer describing where the storey sits in the source model, so a
+// .jsp can be placed correctly without its scenario .xml next to it.
+constexpr char JSP_FSP_MAGIC[4] = {'J', 'S', 'P', 'F'};
+constexpr uint32_t JSP_FSP_VERSION = 1;
+constexpr uint32_t JSP_FSP_RECORD_SIZE = 16; // 4x f32: elevation + centering xyz
 constexpr int JSP_MIN_COMPRESSION_LEVEL = 1;
 constexpr int JSP_MAX_COMPRESSION_LEVEL = 12;
 
@@ -168,6 +173,16 @@ struct ScenarioConfig {
     double rangeNeighborRepulsion{0.1};
     double strengthGeometryRepulsion{5.0};
     double rangeGeometryRepulsion{0.02};
+
+    // Passed through from the exporting application, written to the .jsp so the
+    // trajectory can be placed without the scenario file.
+    struct SourceModelInfo {
+        double storeyElevation{0.0};
+        double centeringX{0.0};
+        double centeringY{0.0};
+        double centeringZ{0.0};
+    };
+    std::optional<SourceModelInfo> sourceModel{};
 };
 
 struct CliArgs {
@@ -208,6 +223,13 @@ T RequiredValue(const pt::ptree& node, const std::string& path, const std::strin
 
 uint64_t ParseUint64(const std::string& value, const std::string& name)
 {
+    if(value.empty() ||
+       !std::all_of(value.begin(), value.end(), [](unsigned char c) {
+           return std::isdigit(c) != 0;
+       })) {
+        throw std::runtime_error("Invalid integer for " + name + ": '" + value + "'");
+    }
+
     std::size_t pos = 0;
     unsigned long long parsed = 0;
     try {
@@ -1249,6 +1271,26 @@ ScenarioConfig ParseScenarioConfig(const std::string& path)
         throw std::runtime_error("scenario.max_iterations must be > 0");
     }
 
+    // flowsimpro_* attributes are optional metadata of the exporting application.
+    {
+        const auto elevation =
+            scenario.get_optional<double>("<xmlattr>.flowsimpro_storey_elevation");
+        const auto centeringX =
+            scenario.get_optional<double>("<xmlattr>.flowsimpro_centering_x");
+        const auto centeringY =
+            scenario.get_optional<double>("<xmlattr>.flowsimpro_centering_y");
+        const auto centeringZ =
+            scenario.get_optional<double>("<xmlattr>.flowsimpro_centering_z");
+        if(elevation || centeringX || centeringY || centeringZ) {
+            ScenarioConfig::SourceModelInfo info{};
+            info.storeyElevation = elevation.value_or(0.0);
+            info.centeringX = centeringX.value_or(0.0);
+            info.centeringY = centeringY.value_or(0.0);
+            info.centeringZ = centeringZ.value_or(0.0);
+            config.sourceModel = info;
+        }
+    }
+
     const auto modelType =
         scenario.get<std::string>("model.<xmlattr>.type", "collision_free_speed");
     if(modelType != "collision_free_speed") {
@@ -1269,7 +1311,16 @@ ScenarioConfig ParseScenarioConfig(const std::string& path)
         "model.<xmlattr>.range_geometry_repulsion",
         config.rangeGeometryRepulsion);
 
-    const auto& geometryNode = scenario.get_child("geometry");
+    const auto geometryNodeOpt = scenario.get_child_optional("geometry");
+    if(!geometryNodeOpt) {
+        if(scenario.get_child_optional("floors")) {
+            throw std::runtime_error(
+                "Scenario contains <floors>: multi-floor scenarios are not supported. "
+                "Export a single storey, which writes <geometry> directly under <scenario>.");
+        }
+        throw std::runtime_error("Missing node scenario.geometry");
+    }
+    const auto& geometryNode = *geometryNodeOpt;
     config.walkable =
         ParsePolygon(geometryNode.get_child("walkable"), "scenario.geometry.walkable");
     for(const auto& [tag, node] : geometryNode) {
@@ -1595,11 +1646,13 @@ public:
         double dt,
         uint32_t everyNthFrame,
         int compressionLevel,
-        std::vector<AgentProfileEntry> agentProfiles)
+        std::vector<AgentProfileEntry> agentProfiles,
+        std::optional<ScenarioConfig::SourceModelInfo> sourceModel = std::nullopt)
         : _path(std::move(path))
         , _everyNthFrame(everyNthFrame)
         , _compressionLevel(compressionLevel)
         , _agentProfiles(std::move(agentProfiles))
+        , _sourceModel(sourceModel)
     {
         _out.open(
             _path,
@@ -1654,6 +1707,8 @@ public:
             AppendF32LE(uncompressed, static_cast<float>(agent.pos.y));
             AppendF32LE(uncompressed, static_cast<float>(agent.orientation.x));
             AppendF32LE(uncompressed, static_cast<float>(agent.orientation.y));
+            // Single-floor scenarios: every agent stays on floor 0.
+            AppendU32LE(uncompressed, 0u);
         }
 
         const auto bound =
@@ -1711,6 +1766,7 @@ public:
         WriteU64LE(_out, indexOffset);
         _out.seekp(0, std::ios::end);
         WriteMetadataSection();
+        WriteSourceModelSection();
 
         _out.flush();
         if(!_out) {
@@ -1744,6 +1800,21 @@ private:
         }
     }
 
+    void WriteSourceModelSection()
+    {
+        if(!_sourceModel.has_value()) {
+            return;
+        }
+
+        WriteAll(_out, JSP_FSP_MAGIC, sizeof(JSP_FSP_MAGIC));
+        WriteU32LE(_out, JSP_FSP_VERSION);
+        WriteU32LE(_out, JSP_FSP_RECORD_SIZE);
+        WriteF32LE(_out, static_cast<float>(_sourceModel->storeyElevation));
+        WriteF32LE(_out, static_cast<float>(_sourceModel->centeringX));
+        WriteF32LE(_out, static_cast<float>(_sourceModel->centeringY));
+        WriteF32LE(_out, static_cast<float>(_sourceModel->centeringZ));
+    }
+
 private:
     void WriteHeader(double dt)
     {
@@ -1768,6 +1839,7 @@ private:
     libdeflate_compressor* _compressor{nullptr};
     std::vector<FrameIndexEntry> _index{};
     std::vector<AgentProfileEntry> _agentProfiles{};
+    std::optional<ScenarioConfig::SourceModelInfo> _sourceModel{};
     std::optional<uint64_t> _lastWrittenIteration{};
     bool _finalized{false};
 };
@@ -1951,7 +2023,8 @@ int main(int argc, char** argv)
             config.dt,
             args.everyNthFrame,
             args.compressionLevel,
-            std::move(agentProfiles));
+            std::move(agentProfiles),
+            config.sourceModel);
 
         writer.WriteFrame(simulation, true);
         while(simulation.AgentCount() > 0 && simulation.Iteration() < config.maxIterations) {

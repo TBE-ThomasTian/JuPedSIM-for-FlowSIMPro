@@ -46,12 +46,14 @@ find_package(CGAL 6.1
 ################################################################################
 # Python Interpreter / CPython
 ################################################################################
-set(Python_FIND_VIRTUALENV "FIRST")
-find_package(Python COMPONENTS Interpreter Development.Module REQUIRED)
-set(PYBIND11_SIMPLE_GIL_MANAGEMENT ON)
-set(PYBIND11_FINDPYTHON ON)
-add_subdirectory(pybind11)
-set(Python_EXECUTABLE ${Python_EXECUTABLE} PARENT_SCOPE)
+if(BUILD_PYTHON_BINDINGS)
+    set(Python_FIND_VIRTUALENV "FIRST")
+    find_package(Python COMPONENTS Interpreter Development.Module REQUIRED)
+    set(PYBIND11_SIMPLE_GIL_MANAGEMENT ON)
+    set(PYBIND11_FINDPYTHON ON)
+    add_subdirectory(pybind11)
+    set(Python_EXECUTABLE ${Python_EXECUTABLE} PARENT_SCOPE)
+endif()
 
 ################################################################################
 # Googletest
@@ -76,3 +78,14 @@ endif ()
 ################################################################################
 set(GLM_ENABLE_CXX_20 ON CACHE BOOL "" FORCE)
 add_subdirectory(glm)
+
+################################################################################
+# libdeflate (native XML CLI only)
+################################################################################
+if(BUILD_XML_CLI AND EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/libdeflate/CMakeLists.txt")
+    set(LIBDEFLATE_BUILD_STATIC_LIB ON CACHE BOOL "" FORCE)
+    set(LIBDEFLATE_BUILD_SHARED_LIB OFF CACHE BOOL "" FORCE)
+    set(LIBDEFLATE_BUILD_GZIP OFF CACHE BOOL "" FORCE)
+    set(LIBDEFLATE_BUILD_TESTS OFF CACHE BOOL "" FORCE)
+    add_subdirectory(libdeflate EXCLUDE_FROM_ALL)
+endif()

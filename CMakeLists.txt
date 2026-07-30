@@ -3,6 +3,9 @@
 ################################################################################
 cmake_minimum_required(VERSION 3.22 FATAL_ERROR)
 project(JuPedSim VERSION 2.0.0 LANGUAGES CXX)
+if(POLICY CMP0144)
+  cmake_policy(SET CMP0144 NEW)
+endif()
 set(CMAKE_CXX_STANDARD 20)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_CXX_EXTENSIONS OFF)
@@ -50,6 +53,9 @@ print_var(BUILD_BENCHMARKS)
 
 set(BUILD_XML_CLI OFF CACHE BOOL "Build native XML CLI executable")
 print_var(BUILD_XML_CLI)
+
+set(BUILD_PYTHON_BINDINGS OFF CACHE BOOL "Build Python bindings")
+print_var(BUILD_PYTHON_BINDINGS)
 
 set(WITH_FORMAT OFF CACHE BOOL "Create format tools")
 print_var(WITH_FORMAT)
@@ -164,28 +170,34 @@ endif()
 # Testing
 ################################################################################
 if(BUILD_TESTS)
-    if(UNIX)
-        set(pytest-wrapper-in ${CMAKE_SOURCE_DIR}/cmake_templates/run-systemtests.unix.in)
-        set(pytest-wrapper-out ${CMAKE_BINARY_DIR}/run-systemtests)
+    if(BUILD_PYTHON_BINDINGS)
+        if(UNIX)
+            set(pytest-wrapper-in ${CMAKE_SOURCE_DIR}/cmake_templates/run-systemtests.unix.in)
+            set(pytest-wrapper-out ${CMAKE_BINARY_DIR}/run-systemtests)
+        else()
+            set(pytest-wrapper-in ${CMAKE_SOURCE_DIR}/cmake_templates/run-systemtests.windows.in)
+            set(pytest-wrapper-out ${CMAKE_BINARY_DIR}/run-systemtests.cmd)
+        endif()
+        configure_file(
+            ${pytest-wrapper-in}
+            ${pytest-wrapper-out}
+            @ONLY
+        )
+        add_custom_target(tests
+            DEPENDS systemtests unittests
+        )
+        add_custom_target(systemtests
+            COMMENT "Running system tests"
+            COMMAND ${pytest-wrapper-out} -vv -s
+                    --basetemp=${CMAKE_BINARY_DIR}/systemtest-out
+                    --junit-xml=result-systemtests.xml
+            DEPENDS py_jupedsim
+        )
     else()
-        set(pytest-wrapper-in ${CMAKE_SOURCE_DIR}/cmake_templates/run-systemtests.windows.in)
-        set(pytest-wrapper-out ${CMAKE_BINARY_DIR}/run-systemtests.cmd)
+        add_custom_target(tests
+            DEPENDS unittests
+        )
     endif()
-    configure_file(
-        ${pytest-wrapper-in}
-        ${pytest-wrapper-out}
-        @ONLY
-    )
-    add_custom_target(tests
-        DEPENDS systemtests unittests
-    )
-    add_custom_target(systemtests
-        COMMENT "Running system tests"
-        COMMAND ${pytest-wrapper-out} -vv -s
-                --basetemp=${CMAKE_BINARY_DIR}/systemtest-out
-                --junit-xml=result-systemtests.xml
-        DEPENDS py_jupedsim
-    )
     set(unittests_dependency_list libsimulator-unittests)
     add_custom_target(unittests
         DEPENDS ${unittests_dependency_list}
@@ -213,7 +225,9 @@ endif()
 ################################################################################
 add_subdirectory(libcommon)
 add_subdirectory(libsimulator)
-add_subdirectory(python_bindings_jupedsim)
+if(BUILD_PYTHON_BINDINGS)
+    add_subdirectory(python_bindings_jupedsim)
+endif()
 
 ################################################################################
 # Code formatting
@@ -275,7 +289,7 @@ endif()
 ################################################################################
 # Integration tests
 ################################################################################
-if (BUILD_TESTS)
+if(BUILD_TESTS AND BUILD_PYTHON_BINDINGS)
   # Find libraries needed by python tests
   find_python_library(pytest)
-endif (BUILD_TESTS)
+endif()
