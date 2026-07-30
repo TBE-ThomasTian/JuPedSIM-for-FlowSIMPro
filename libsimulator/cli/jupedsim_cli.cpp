@@ -2027,12 +2027,200 @@ int main(int argc, char** argv)
             config.sourceModel);
 
         writer.WriteFrame(simulation, true);
+
+        // Progress for callers that drive this as a subprocess. Printed rarely
+        // and flushed, because stdout is fully buffered when it is a pipe.
+        const uint64_t progressEvery =
+            std::max<uint64_t>(1, config.maxIterations / 200);
+
+        // Agents that stop making progress are the failure mode that is easy to
+        // miss: the run looks finished, the evacuation time is simply wrong.
+        // Sample positions every few seconds and report who never moved.
+        const uint64_t stallCheckEvery =
+            std::max<uint64_t>(1, static_cast<uint64_t>(5.0 / config.dt));
+        constexpr double kStallDistance = 0.05;   // metres per sample
+        constexpr int kStallSamples = 3;          // ~15 s without progress
+        std::unordered_map<uint64_t, Point> lastSampled{};
+        std::unordered_map<uint64_t, int> stalledSamples{};
+
+        // Queueing in front of a door is a result, not a defect, so it is
+        // counted separately from agents that hang somewhere in the open.
+        constexpr double kExitVicinity = 2.0;   // metres
+        struct ExitArea {
+            double minX{}, minY{}, maxX{}, maxY{};
+            size_t maxQueue{0};
+            double maxQueueTime{0.0};
+            size_t left{0};              // persons that went through this exit
+            double firstLeftTime{-1.0};
+            double lastLeftTime{0.0};
+        };
+        std::vector<ExitArea> exitAreas{};
+        {
+            std::vector<std::vector<Point>> exitPolygons{};
+            if(config.exitPolygon.has_value()) {
+                exitPolygons.push_back(*config.exitPolygon);
+            } else if(config.multiExit.has_value()) {
+                exitPolygons = config.multiExit->polygons;
+            }
+            for(const auto& polygon : exitPolygons) {
+                ExitArea area{};
+                area.minX = area.minY = std::numeric_limits<double>::max();
+                area.maxX = area.maxY = std::numeric_limits<double>::lowest();
+                for(const auto& p : polygon) {
+                    area.minX = std::min(area.minX, p.x);
+                    area.maxX = std::max(area.maxX, p.x);
+                    area.minY = std::min(area.minY, p.y);
+                    area.maxY = std::max(area.maxY, p.y);
+                }
+                exitAreas.push_back(area);
+            }
+        }
+
+        const auto distanceToExit = [](const ExitArea& area, const Point& p) {
+            const double dx = std::max({area.minX - p.x, 0.0, p.x - area.maxX});
+            const double dy = std::max({area.minY - p.y, 0.0, p.y - area.maxY});
+            return std::hypot(dx, dy);
+        };
+
         while(simulation.AgentCount() > 0 && simulation.Iteration() < config.maxIterations) {
+            // Positions of this iteration's agents, so an agent that leaves can
+            // be attributed to the exit it was standing at.
+            std::unordered_map<uint64_t, Point> positionBeforeStep{};
+            if(!exitAreas.empty()) {
+                for(const auto& agent : simulation.Agents()) {
+                    positionBeforeStep[agent.id.getID()] = agent.pos;
+                }
+            }
+
             simulation.Iterate();
+
+            for(const auto& removed : simulation.RemovedAgents()) {
+                const auto it = positionBeforeStep.find(removed.getID());
+                if(it == positionBeforeStep.end() || exitAreas.empty()) {
+                    continue;
+                }
+                size_t nearest = 0;
+                double nearestDistance = std::numeric_limits<double>::max();
+                for(size_t e = 0; e < exitAreas.size(); ++e) {
+                    const double d = distanceToExit(exitAreas[e], it->second);
+                    if(d < nearestDistance) {
+                        nearestDistance = d;
+                        nearest = e;
+                    }
+                }
+                ExitArea& area = exitAreas[nearest];
+                ++area.left;
+                if(area.firstLeftTime < 0.0) {
+                    area.firstLeftTime = simulation.ElapsedTime();
+                }
+                area.lastLeftTime = simulation.ElapsedTime();
+            }
+
             writer.WriteFrame(
                 simulation,
                 simulation.AgentCount() == 0 ||
                     simulation.Iteration() >= config.maxIterations);
+
+            if(simulation.Iteration() % progressEvery == 0) {
+                fmt::print(
+                    "progress={} of {} agents={}\n",
+                    simulation.Iteration(),
+                    config.maxIterations,
+                    simulation.AgentCount());
+                std::fflush(stdout);
+            }
+
+            if(simulation.Iteration() % stallCheckEvery == 0) {
+                std::vector<size_t> queueSize(exitAreas.size(), 0);
+
+                for(const auto& agent : simulation.Agents()) {
+                    const uint64_t id = agent.id.getID();
+                    const auto previous = lastSampled.find(id);
+                    if(previous != lastSampled.end() &&
+                       std::hypot(agent.pos.x - previous->second.x,
+                                  agent.pos.y - previous->second.y) < kStallDistance) {
+                        ++stalledSamples[id];
+                    } else {
+                        stalledSamples[id] = 0;
+                    }
+                    lastSampled[id] = agent.pos;
+
+                    for(size_t e = 0; e < exitAreas.size(); ++e) {
+                        if(distanceToExit(exitAreas[e], agent.pos) <= kExitVicinity) {
+                            ++queueSize[e];
+                        }
+                    }
+                }
+
+                for(size_t e = 0; e < exitAreas.size(); ++e) {
+                    if(queueSize[e] > exitAreas[e].maxQueue) {
+                        exitAreas[e].maxQueue = queueSize[e];
+                        exitAreas[e].maxQueueTime = simulation.ElapsedTime();
+                    }
+                }
+            }
+        }
+
+        for(size_t e = 0; e < exitAreas.size(); ++e) {
+            const ExitArea& area = exitAreas[e];
+            const double width = std::min(area.maxX - area.minX, area.maxY - area.minY);
+            const double span = area.lastLeftTime - std::max(0.0, area.firstLeftTime);
+            const double flow = (area.left > 1 && span > 1e-9)
+                                    ? static_cast<double>(area.left) / span
+                                    : 0.0;
+            fmt::print(
+                "exit={} width={:.2f} m left={} first={:.1f} s last={:.1f} s flow={:.2f} persons/s\n",
+                e + 1,
+                width,
+                area.left,
+                std::max(0.0, area.firstLeftTime),
+                area.lastLeftTime,
+                flow);
+            fmt::print(
+                "congestion exit={} max_persons_within_{:.0f}m={} at t={:.1f} s\n",
+                e + 1,
+                kExitVicinity,
+                area.maxQueue,
+                area.maxQueueTime);
+        }
+
+        std::vector<std::pair<uint64_t, Point>> stuck{};
+        size_t queueing = 0;
+        for(const auto& agent : simulation.Agents()) {
+            const auto it = stalledSamples.find(agent.id.getID());
+            if(it == stalledSamples.end() || it->second < kStallSamples) {
+                continue;
+            }
+            const bool atExit = std::any_of(
+                exitAreas.begin(), exitAreas.end(), [&](const ExitArea& area) {
+                    return distanceToExit(area, agent.pos) <= kExitVicinity;
+                });
+            if(atExit) {
+                ++queueing;
+            } else {
+                stuck.emplace_back(agent.id.getID(), agent.pos);
+            }
+        }
+        if(queueing > 0) {
+            fmt::print("queueing_agents={} (waiting within {:.0f} m of an exit)\n",
+                       queueing, kExitVicinity);
+        }
+        if(!stuck.empty()) {
+            fmt::print(
+                "stuck_agents={} (no progress for {:.0f} s, not at an exit)\n",
+                stuck.size(),
+                kStallSamples * stallCheckEvery * config.dt);
+            const size_t shown = std::min<size_t>(stuck.size(), 10);
+            for(size_t i = 0; i < shown; ++i) {
+                fmt::print(
+                    "stuck id={} at ({:.3f}, {:.3f})\n",
+                    stuck[i].first,
+                    stuck[i].second.x,
+                    stuck[i].second.y);
+            }
+            if(stuck.size() > shown) {
+                fmt::print("stuck ... and {} more\n", stuck.size() - shown);
+            }
         }
         writer.Finalize();
 

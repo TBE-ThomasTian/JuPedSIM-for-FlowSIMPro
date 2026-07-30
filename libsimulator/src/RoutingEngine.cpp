@@ -51,7 +51,33 @@ std::unique_ptr<RoutingEngine> RoutingEngine::Clone() const
 
 Point RoutingEngine::ComputeWaypoint(Point currentPosition, Point destination)
 {
-    return ComputeAllWaypoints(currentPosition, destination)[1];
+    const auto waypoints = ComputeAllWaypoints(currentPosition, destination);
+
+    // An empty result means the search found no route through the navigable
+    // area. Indexing into it regardless used to hand the agent an undefined
+    // point: it then drifted off and stood still for the rest of the run,
+    // which is indistinguishable from a plausible simulation result. Say it
+    // out loud instead, with the position, so the geometry can be repaired.
+    const bool noRoute =
+        waypoints.size() < 2 ||
+        // A next waypoint identical to where the agent already stands is the
+        // other shape this failure takes: the agent is asked to walk to its own
+        // position, so it never moves again.
+        (Distance(waypoints[1], currentPosition) < 1e-9 &&
+         Distance(destination, currentPosition) > 1e-9);
+
+    if(noRoute) {
+        throw SimulationError(
+            "No route from ({:.3f}, {:.3f}) to ({:.3f}, {:.3f}). The navigable area is "
+            "split at this point, for example by hairline obstacles from an exported "
+            "cross-section or by an opening that is too narrow.",
+            currentPosition.x,
+            currentPosition.y,
+            destination.x,
+            destination.y);
+    }
+
+    return waypoints[1];
 }
 
 struct SearchState {
