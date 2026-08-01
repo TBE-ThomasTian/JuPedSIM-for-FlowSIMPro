@@ -29,6 +29,8 @@ add_library(simulator STATIC
     src/Ellipse.cpp
     src/Ellipse.hpp
     src/Enum.hpp
+    src/FdsVisibilityField.cpp
+    src/FdsVisibilityField.hpp
     src/GeneralizedCentrifugalForceModel.cpp
     src/GeneralizedCentrifugalForceModel.hpp
     src/GeneralizedCentrifugalForceModelBuilder.cpp
@@ -213,6 +215,7 @@ if (BUILD_TESTS)
         test/TestAABB.cpp
         test/TestBasicPrimitiveTests.cpp
         test/TestCollisionGeometry.cpp
+        test/TestFdsVisibilityField.cpp
         test/TestGraph.cpp
         test/TestJourney.cpp
         test/TestLineSegment.cpp

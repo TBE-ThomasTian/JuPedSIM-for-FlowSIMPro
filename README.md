@@ -62,7 +62,7 @@ Supported distribution modes:
 - Added docs:
   - `examples/xml/README_distribution.md` for distribution options
   - `examples/xml/README_transition_validation.md` for multi-exit transition validation
-  - `examples/xml/jsp_format.md` for binary JSP v1 layout.
+  - `examples/xml/jsp_format.md` for the binary JSP layout and optional metadata blocks.
 
 ## License
 

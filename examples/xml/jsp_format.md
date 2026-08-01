@@ -87,3 +87,33 @@ Then one record (16 bytes):
 - `f32 centering_shift_x` (from `flowsimpro_centering_x`)
 - `f32 centering_shift_y` (from `flowsimpro_centering_y`)
 - `f32 centering_shift_z` (from `flowsimpro_centering_z`)
+
+### FDS Smoke Coupling Block
+
+Written when the trajectory was simulated with an `<fds_hazard>` configuration.
+It lets an importing application recognize the coupling, locate the Smokeview
+case, and synchronize the smoke with the evacuation timeline. The SMV path is
+UTF-8 and normally relative to the JSP file so the result remains movable.
+
+1. `char[4] magic` = `JSPH`
+2. `u32 version` = `1`
+3. `u32 payload_size` = `56 + smv_path_length`
+4. `u32 flags`
+   - bit 0: FDS Smoke3D soot coupling was applied
+   - bit 1: `smv_path` is relative to the JSP directory
+5. `u32 smv_path_length`
+6. `f32 sample_eye_z_m`
+7. `f32 z_tolerance_m`
+8. `f32 coordinate_offset_x_m`
+9. `f32 coordinate_offset_y_m`
+10. `f64 time_offset_s` (currently `0`)
+11. `f32 update_interval_s`
+12. `f32 awareness_below_m`
+13. `f32 severe_below_m`
+14. `f32 minimum_speed_factor`
+15. `f32 visibility_factor`
+16. `f32 maximum_visibility_m`
+17. `u8[smv_path_length] smv_path` (UTF-8, without a null terminator)
+
+If the resolved SMV file is unavailable, an importer should keep the JSP
+trajectory usable and offer the user a file picker instead of rejecting it.

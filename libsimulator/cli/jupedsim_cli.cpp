@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: LGPL-3.0-or-later
 #include "CollisionFreeSpeedModel.hpp"
 #include "CollisionFreeSpeedModelData.hpp"
+#include "FdsVisibilityField.hpp"
 #include "GenericAgent.hpp"
 #include "GeometryBuilder.hpp"
 #include "Journey.hpp"
@@ -51,6 +52,13 @@ constexpr uint32_t JSP_META_RECORD_SIZE = 24; // u64 id + u8 age + u8 avatar + u
 constexpr char JSP_FSP_MAGIC[4] = {'J', 'S', 'P', 'F'};
 constexpr uint32_t JSP_FSP_VERSION = 1;
 constexpr uint32_t JSP_FSP_RECORD_SIZE = 16; // 4x f32: elevation + centering xyz
+// Optional FDS Smoke3D coupling metadata. The payload size makes this trailer
+// extensible without changing the trajectory stream version.
+constexpr char JSP_HAZARD_MAGIC[4] = {'J', 'S', 'P', 'H'};
+constexpr uint32_t JSP_HAZARD_VERSION = 1;
+constexpr uint32_t JSP_HAZARD_FIXED_PAYLOAD_SIZE = 56;
+constexpr uint32_t JSP_HAZARD_FLAG_FDS_SMOKE3D = 1;
+constexpr uint32_t JSP_HAZARD_FLAG_RELATIVE_PATH = 2;
 constexpr int JSP_MIN_COMPRESSION_LEVEL = 1;
 constexpr int JSP_MAX_COMPRESSION_LEVEL = 12;
 
@@ -67,6 +75,12 @@ constexpr uint8_t AVATAR_HINT_YOUNG = 1;
 constexpr uint8_t AVATAR_HINT_ADULT = 2;
 constexpr uint8_t AVATAR_HINT_GRANDPA = 3;
 constexpr uint8_t AVATAR_HINT_GRANDMA = 4;
+// Sex-specific variants. The trajectory file stores the hint as one byte, so
+// these values extend the range without touching the format.
+constexpr uint8_t AVATAR_HINT_YOUNG_MALE = 5;
+constexpr uint8_t AVATAR_HINT_YOUNG_FEMALE = 6;
+constexpr uint8_t AVATAR_HINT_ADULT_MALE = 7;
+constexpr uint8_t AVATAR_HINT_ADULT_FEMALE = 8;
 
 struct AgentConfig {
     Point position{};
@@ -174,6 +188,22 @@ struct ScenarioConfig {
     double strengthGeometryRepulsion{5.0};
     double rangeGeometryRepulsion{0.02};
 
+    struct FdsHazardConfig {
+        std::optional<fs::path> smvFile{};
+        double eyeHeight{1.6};
+        std::optional<double> sliceZ{};
+        double zTolerance{0.25};
+        double offsetX{0.0};
+        double offsetY{0.0};
+        double updateInterval{0.5};
+        double awarenessBelow{15.0};
+        double severeBelow{5.0};
+        double minimumSpeedFactor{0.25};
+        double visibilityFactor{3.0};
+        double maximumVisibility{100.0};
+    };
+    std::optional<FdsHazardConfig> fdsHazard{};
+
     // Passed through from the exporting application, written to the .jsp so the
     // trajectory can be placed without the scenario file.
     struct SourceModelInfo {
@@ -189,8 +219,25 @@ struct CliArgs {
     std::string scenarioPath{};
     std::optional<uint64_t> maxIterationsOverride{};
     std::optional<std::string> outputPath{};
+    std::optional<std::string> fdsSmvPath{};
     uint32_t everyNthFrame{1};
     int compressionLevel{6};
+};
+
+struct FdsJspMetadata {
+    std::string smvPathUtf8{};
+    bool pathIsRelative{false};
+    double sampleZ{};
+    double zTolerance{};
+    double offsetX{};
+    double offsetY{};
+    double timeOffsetSeconds{};
+    double updateInterval{};
+    double awarenessBelow{};
+    double severeBelow{};
+    double minimumSpeedFactor{};
+    double visibilityFactor{};
+    double maximumVisibility{};
 };
 
 struct FrameIndexEntry {
@@ -254,6 +301,7 @@ void PrintUsage(const char* program)
         "Options:\n"
         "  --out-jsp <file.jsp>       Output trajectory file path\n"
         "                             (default: <scenario>.jsp)\n"
+        "  --fds-smv <file.smv>       Override the FDS Smokeview file configured in XML\n"
         "  --max-iterations <N>       Stop simulation after at most N iterations\n"
         "  --every-nth-frame <N>      Write every Nth simulation frame to .jsp\n"
         "  --compression-level <1-12> libdeflate level (default: 6)\n"
@@ -265,6 +313,12 @@ void PrintUsage(const char* program)
         "      <walkable><vertex x=\"0\" y=\"0\"/>...</walkable>\n"
         "      <obstacle>...</obstacle>  <!-- optional, repeatable -->\n"
         "    </geometry>\n"
+        "    <fds_hazard file=\"case.smv\" eye_height=\"1.60\" z_tolerance=\"0.25\"\n"
+        "                offset_x=\"0.0\" offset_y=\"0.0\" update_interval=\"0.5\">\n"
+        "      <visibility awareness_below=\"15.0\" severe_below=\"5.0\"\n"
+        "                  minimum_speed_factor=\"0.25\" visibility_factor=\"3.0\"\n"
+        "                  maximum_visibility=\"100.0\"/>\n"
+        "    </fds_hazard> <!-- optional; --fds-smv overrides only file -->\n"
         "    <exit><vertex x=\"...\" y=\"...\"/>...</exit>  <!-- single exit mode -->\n"
         "    <!-- OR multi-exit decision mode: -->\n"
         "    <decision x=\"...\" y=\"...\" distance=\"0.8\"/>\n"
@@ -386,11 +440,23 @@ uint8_t AvatarHintCodeFromString(const std::string& value)
     if(value == "adult") {
         return AVATAR_HINT_ADULT;
     }
-    if(value == "grandpa") {
+    if(value == "grandpa" || value == "elderly_male") {
         return AVATAR_HINT_GRANDPA;
     }
-    if(value == "grandma") {
+    if(value == "grandma" || value == "elderly_female") {
         return AVATAR_HINT_GRANDMA;
+    }
+    if(value == "young_male") {
+        return AVATAR_HINT_YOUNG_MALE;
+    }
+    if(value == "young_female") {
+        return AVATAR_HINT_YOUNG_FEMALE;
+    }
+    if(value == "adult_male") {
+        return AVATAR_HINT_ADULT_MALE;
+    }
+    if(value == "adult_female") {
+        return AVATAR_HINT_ADULT_FEMALE;
     }
     return AVATAR_HINT_UNKNOWN;
 }
@@ -1211,6 +1277,11 @@ CliArgs ParseCliArgs(int argc, char** argv)
                 throw std::runtime_error("Missing value for --out-jsp");
             }
             args.outputPath = std::string(argv[++idx]);
+        } else if(token == "--fds-smv") {
+            if(idx + 1 >= argc) {
+                throw std::runtime_error("Missing value for --fds-smv");
+            }
+            args.fdsSmvPath = std::string(argv[++idx]);
         } else if(token == "--every-nth-frame") {
             if(idx + 1 >= argc) {
                 throw std::runtime_error("Missing value for --every-nth-frame");
@@ -1289,6 +1360,89 @@ ScenarioConfig ParseScenarioConfig(const std::string& path)
             info.centeringZ = centeringZ.value_or(0.0);
             config.sourceModel = info;
         }
+    }
+
+    if(const auto fdsNodeOpt = scenario.get_child_optional("fds_hazard"); fdsNodeOpt) {
+        const auto& fdsNode = *fdsNodeOpt;
+        ScenarioConfig::FdsHazardConfig fds{};
+        if(const auto configuredFile =
+               fdsNode.get_optional<std::string>("<xmlattr>.file");
+           configuredFile) {
+            if(configuredFile->empty()) {
+                throw std::runtime_error("scenario.fds_hazard.file must not be empty");
+            }
+            fs::path file(*configuredFile);
+            if(file.is_relative()) {
+                file = fs::absolute(fs::path(path)).parent_path() / file;
+            }
+            fds.smvFile = file.lexically_normal();
+        }
+        fds.eyeHeight =
+            fdsNode.get<double>("<xmlattr>.eye_height", fds.eyeHeight);
+        if(const auto sliceZ = fdsNode.get_optional<double>("<xmlattr>.slice_z"); sliceZ) {
+            fds.sliceZ = *sliceZ;
+        }
+        fds.zTolerance =
+            fdsNode.get<double>("<xmlattr>.z_tolerance", fds.zTolerance);
+        fds.offsetX = fdsNode.get<double>("<xmlattr>.offset_x", fds.offsetX);
+        fds.offsetY = fdsNode.get<double>("<xmlattr>.offset_y", fds.offsetY);
+        fds.updateInterval =
+            fdsNode.get<double>("<xmlattr>.update_interval", fds.updateInterval);
+
+        if(const auto visibilityNode = fdsNode.get_child_optional("visibility"); visibilityNode) {
+            fds.awarenessBelow = visibilityNode->get<double>(
+                "<xmlattr>.awareness_below", fds.awarenessBelow);
+            fds.severeBelow = visibilityNode->get<double>(
+                "<xmlattr>.severe_below", fds.severeBelow);
+            fds.minimumSpeedFactor = visibilityNode->get<double>(
+                "<xmlattr>.minimum_speed_factor", fds.minimumSpeedFactor);
+            fds.visibilityFactor = visibilityNode->get<double>(
+                "<xmlattr>.visibility_factor", fds.visibilityFactor);
+            fds.maximumVisibility = visibilityNode->get<double>(
+                "<xmlattr>.maximum_visibility", fds.maximumVisibility);
+        }
+
+        if(!std::isfinite(fds.eyeHeight) || fds.eyeHeight <= 0.0) {
+            throw std::runtime_error("scenario.fds_hazard.eye_height must be finite and > 0");
+        }
+        if(fds.sliceZ && !std::isfinite(*fds.sliceZ)) {
+            throw std::runtime_error("scenario.fds_hazard.slice_z must be finite");
+        }
+        if(!std::isfinite(fds.zTolerance) || fds.zTolerance < 0.0) {
+            throw std::runtime_error(
+                "scenario.fds_hazard.z_tolerance must be finite and >= 0");
+        }
+        if(!std::isfinite(fds.offsetX) || !std::isfinite(fds.offsetY)) {
+            throw std::runtime_error("scenario.fds_hazard offsets must be finite");
+        }
+        if(!std::isfinite(fds.updateInterval) || fds.updateInterval <= 0.0) {
+            throw std::runtime_error(
+                "scenario.fds_hazard.update_interval must be finite and > 0");
+        }
+        if(!std::isfinite(fds.awarenessBelow) || fds.awarenessBelow <= 0.0) {
+            throw std::runtime_error(
+                "scenario.fds_hazard.visibility.awareness_below must be finite and > 0");
+        }
+        if(!std::isfinite(fds.severeBelow) || fds.severeBelow < 0.0 ||
+           fds.severeBelow >= fds.awarenessBelow) {
+            throw std::runtime_error(
+                "scenario.fds_hazard.visibility.severe_below must be finite, >= 0, and less "
+                "than awareness_below");
+        }
+        if(!std::isfinite(fds.minimumSpeedFactor) || fds.minimumSpeedFactor <= 0.0 ||
+           fds.minimumSpeedFactor > 1.0) {
+            throw std::runtime_error(
+                "scenario.fds_hazard.visibility.minimum_speed_factor must be in (0, 1]");
+        }
+        if(!std::isfinite(fds.visibilityFactor) || fds.visibilityFactor <= 0.0) {
+            throw std::runtime_error(
+                "scenario.fds_hazard.visibility.visibility_factor must be finite and > 0");
+        }
+        if(!std::isfinite(fds.maximumVisibility) || fds.maximumVisibility <= 0.0) {
+            throw std::runtime_error(
+                "scenario.fds_hazard.visibility.maximum_visibility must be finite and > 0");
+        }
+        config.fdsHazard = std::move(fds);
     }
 
     const auto modelType =
@@ -1638,6 +1792,49 @@ uint64_t StreamPosToU64(std::streampos pos)
     return static_cast<uint64_t>(asOff);
 }
 
+std::string PathToUtf8(const fs::path& path)
+{
+    const auto encoded = path.generic_u8string();
+    return std::string(
+        reinterpret_cast<const char*>(encoded.data()),
+        encoded.size());
+}
+
+FdsJspMetadata MakeFdsJspMetadata(
+    const fs::path& jspPath,
+    const ScenarioConfig::FdsHazardConfig& config,
+    double sampleZ)
+{
+    if(!config.smvFile.has_value()) {
+        throw std::runtime_error("Internal error: FDS JSP metadata has no SMV file");
+    }
+
+    const auto absoluteJsp = fs::absolute(jspPath).lexically_normal();
+    const auto absoluteSmv = fs::absolute(*config.smvFile).lexically_normal();
+    std::error_code error{};
+    auto storedPath = fs::relative(absoluteSmv, absoluteJsp.parent_path(), error);
+    const bool pathIsRelative = !error && !storedPath.empty();
+    if(!pathIsRelative) {
+        storedPath = absoluteSmv;
+    }
+
+    return FdsJspMetadata{
+        .smvPathUtf8 = PathToUtf8(storedPath),
+        .pathIsRelative = pathIsRelative,
+        .sampleZ = sampleZ,
+        .zTolerance = config.zTolerance,
+        .offsetX = config.offsetX,
+        .offsetY = config.offsetY,
+        .timeOffsetSeconds = 0.0,
+        .updateInterval = config.updateInterval,
+        .awarenessBelow = config.awarenessBelow,
+        .severeBelow = config.severeBelow,
+        .minimumSpeedFactor = config.minimumSpeedFactor,
+        .visibilityFactor = config.visibilityFactor,
+        .maximumVisibility = config.maximumVisibility,
+    };
+}
+
 class JspTrajectoryWriter
 {
 public:
@@ -1647,12 +1844,14 @@ public:
         uint32_t everyNthFrame,
         int compressionLevel,
         std::vector<AgentProfileEntry> agentProfiles,
-        std::optional<ScenarioConfig::SourceModelInfo> sourceModel = std::nullopt)
+        std::optional<ScenarioConfig::SourceModelInfo> sourceModel,
+        std::optional<FdsJspMetadata> fdsMetadata)
         : _path(std::move(path))
         , _everyNthFrame(everyNthFrame)
         , _compressionLevel(compressionLevel)
         , _agentProfiles(std::move(agentProfiles))
         , _sourceModel(sourceModel)
+        , _fdsMetadata(std::move(fdsMetadata))
     {
         _out.open(
             _path,
@@ -1675,6 +1874,14 @@ public:
             });
         if(_agentProfiles.size() > static_cast<size_t>(std::numeric_limits<uint32_t>::max())) {
             throw std::runtime_error("Too many agents to encode metadata in .jsp");
+        }
+        if(_fdsMetadata.has_value()) {
+            const auto pathSize = _fdsMetadata->smvPathUtf8.size();
+            if(pathSize == 0 ||
+               pathSize > static_cast<size_t>(std::numeric_limits<uint32_t>::max()) -
+                              JSP_HAZARD_FIXED_PAYLOAD_SIZE) {
+                throw std::runtime_error("FDS SMV path is too long to encode in .jsp");
+            }
         }
 
         WriteHeader(dt);
@@ -1767,6 +1974,7 @@ public:
         _out.seekp(0, std::ios::end);
         WriteMetadataSection();
         WriteSourceModelSection();
+        WriteFdsHazardSection();
 
         _out.flush();
         if(!_out) {
@@ -1815,6 +2023,35 @@ private:
         WriteF32LE(_out, static_cast<float>(_sourceModel->centeringZ));
     }
 
+    void WriteFdsHazardSection()
+    {
+        if(!_fdsMetadata.has_value()) {
+            return;
+        }
+
+        const auto& metadata = *_fdsMetadata;
+        const auto pathSize = static_cast<uint32_t>(metadata.smvPathUtf8.size());
+        const uint32_t flags = JSP_HAZARD_FLAG_FDS_SMOKE3D |
+                               (metadata.pathIsRelative ? JSP_HAZARD_FLAG_RELATIVE_PATH : 0U);
+        WriteAll(_out, JSP_HAZARD_MAGIC, sizeof(JSP_HAZARD_MAGIC));
+        WriteU32LE(_out, JSP_HAZARD_VERSION);
+        WriteU32LE(_out, JSP_HAZARD_FIXED_PAYLOAD_SIZE + pathSize);
+        WriteU32LE(_out, flags);
+        WriteU32LE(_out, pathSize);
+        WriteF32LE(_out, static_cast<float>(metadata.sampleZ));
+        WriteF32LE(_out, static_cast<float>(metadata.zTolerance));
+        WriteF32LE(_out, static_cast<float>(metadata.offsetX));
+        WriteF32LE(_out, static_cast<float>(metadata.offsetY));
+        WriteF64LE(_out, metadata.timeOffsetSeconds);
+        WriteF32LE(_out, static_cast<float>(metadata.updateInterval));
+        WriteF32LE(_out, static_cast<float>(metadata.awarenessBelow));
+        WriteF32LE(_out, static_cast<float>(metadata.severeBelow));
+        WriteF32LE(_out, static_cast<float>(metadata.minimumSpeedFactor));
+        WriteF32LE(_out, static_cast<float>(metadata.visibilityFactor));
+        WriteF32LE(_out, static_cast<float>(metadata.maximumVisibility));
+        WriteAll(_out, metadata.smvPathUtf8.data(), metadata.smvPathUtf8.size());
+    }
+
 private:
     void WriteHeader(double dt)
     {
@@ -1840,6 +2077,7 @@ private:
     std::vector<FrameIndexEntry> _index{};
     std::vector<AgentProfileEntry> _agentProfiles{};
     std::optional<ScenarioConfig::SourceModelInfo> _sourceModel{};
+    std::optional<FdsJspMetadata> _fdsMetadata{};
     std::optional<uint64_t> _lastWrittenIteration{};
     bool _finalized{false};
 };
@@ -1853,6 +2091,49 @@ int main(int argc, char** argv)
         auto config = ParseScenarioConfig(args.scenarioPath);
         if(args.maxIterationsOverride.has_value()) {
             config.maxIterations = *args.maxIterationsOverride;
+        }
+        if(args.fdsSmvPath.has_value()) {
+            if(!config.fdsHazard.has_value()) {
+                throw std::runtime_error(
+                    "--fds-smv requires an <fds_hazard> section in the scenario XML so the "
+                    "visibility behavior is explicit");
+            }
+            config.fdsHazard->smvFile =
+                fs::absolute(fs::path(*args.fdsSmvPath)).lexically_normal();
+        }
+
+        std::optional<FdsVisibilityField> fdsVisibility{};
+        std::optional<double> fdsSampleZ{};
+        if(config.fdsHazard.has_value()) {
+            auto& fds = *config.fdsHazard;
+            if(!fds.smvFile.has_value()) {
+                throw std::runtime_error(
+                    "<fds_hazard> requires file=\"...smv\" or the --fds-smv override");
+            }
+            if(ToLowerAscii(fds.smvFile->extension().string()) != ".smv") {
+                throw std::runtime_error("FDS hazard input must be a .smv file");
+            }
+            double targetZ = fds.eyeHeight;
+            if(config.sourceModel.has_value()) {
+                targetZ += config.sourceModel->storeyElevation;
+            }
+            if(fds.sliceZ.has_value()) {
+                targetZ = *fds.sliceZ;
+            }
+            fdsSampleZ = targetZ;
+            fdsVisibility = FdsVisibilityField::Load(
+                *fds.smvFile,
+                targetZ,
+                fds.zTolerance,
+                fds.visibilityFactor,
+                fds.maximumVisibility);
+            fmt::print(
+                "fds_smoke={} meshes={} eye_z={:.3f}m time=[{:.3f},{:.3f}]s\n",
+                fdsVisibility->SmvFile().string(),
+                fdsVisibility->SliceCount(),
+                fdsVisibility->SliceZ(),
+                fdsVisibility->FirstTime(),
+                fdsVisibility->LastTime());
         }
 
         fs::path outputPath{};
@@ -1981,6 +2262,8 @@ int main(int argc, char** argv)
 
         std::vector<AgentProfileEntry> agentProfiles{};
         agentProfiles.reserve(allAgents.size());
+        std::unordered_map<uint64_t, double> baseDesiredSpeeds{};
+        baseDesiredSpeeds.reserve(allAgents.size());
 
         for(const auto& agentConfig : allAgents) {
             CollisionFreeSpeedModelData modelData{};
@@ -1996,6 +2279,7 @@ int main(int argc, char** argv)
                 Point{1.0, 0.0},
                 modelData};
             const auto agentId = simulation.AddAgent(std::move(agent)).getID();
+            baseDesiredSpeeds.emplace(agentId, agentConfig.desiredSpeed);
 
             uint8_t ageGroupCode = AgeGroupCodeFromString(agentConfig.ageGroup);
             if(ageGroupCode == AGE_GROUP_UNKNOWN) {
@@ -2018,13 +2302,20 @@ int main(int argc, char** argv)
                 });
         }
 
+        std::optional<FdsJspMetadata> fdsJspMetadata{};
+        if(config.fdsHazard.has_value() && fdsSampleZ.has_value()) {
+            fdsJspMetadata =
+                MakeFdsJspMetadata(outputPath, *config.fdsHazard, *fdsSampleZ);
+        }
+
         JspTrajectoryWriter writer(
             outputPath,
             config.dt,
             args.everyNthFrame,
             args.compressionLevel,
             std::move(agentProfiles),
-            config.sourceModel);
+            config.sourceModel,
+            std::move(fdsJspMetadata));
 
         writer.WriteFrame(simulation, true);
 
@@ -2082,7 +2373,60 @@ int main(int argc, char** argv)
             return std::hypot(dx, dy);
         };
 
+        double nextFdsUpdate = 0.0;
+        bool warnedOutsideFdsMeshes = false;
+        bool warnedAfterFdsData = false;
         while(simulation.AgentCount() > 0 && simulation.Iteration() < config.maxIterations) {
+            if(fdsVisibility.has_value() &&
+               simulation.ElapsedTime() + std::numeric_limits<double>::epsilon() >=
+                   nextFdsUpdate) {
+                const auto& fds = *config.fdsHazard;
+                std::size_t agentsOutsideMeshes = 0;
+                for(auto& agent : simulation.Agents()) {
+                    auto& modelData = std::get<CollisionFreeSpeedModelData>(agent.model);
+                    const auto baseSpeed = baseDesiredSpeeds.at(agent.id.getID());
+                    const auto visibility = fdsVisibility->Sample(
+                        simulation.ElapsedTime(),
+                        Point{agent.pos.x + fds.offsetX, agent.pos.y + fds.offsetY});
+                    if(!visibility.has_value()) {
+                        modelData.v0 = baseSpeed;
+                        ++agentsOutsideMeshes;
+                        continue;
+                    }
+
+                    double speedFactor = 1.0;
+                    if(*visibility <= fds.severeBelow) {
+                        speedFactor = fds.minimumSpeedFactor;
+                    } else if(*visibility < fds.awarenessBelow) {
+                        const double interpolation =
+                            (*visibility - fds.severeBelow) /
+                            (fds.awarenessBelow - fds.severeBelow);
+                        speedFactor = fds.minimumSpeedFactor +
+                                      (1.0 - fds.minimumSpeedFactor) * interpolation;
+                    }
+                    modelData.v0 = baseSpeed * speedFactor;
+                }
+                if(agentsOutsideMeshes > 0 && !warnedOutsideFdsMeshes) {
+                    fmt::print(
+                        stderr,
+                        "warning: {} agents are outside the Smoke3D meshes; their base speed is "
+                        "used\n",
+                        agentsOutsideMeshes);
+                    warnedOutsideFdsMeshes = true;
+                }
+                if(simulation.ElapsedTime() > fdsVisibility->LastTime() &&
+                   !warnedAfterFdsData) {
+                    fmt::print(
+                        stderr,
+                        "warning: JuPedSIM time exceeds the last Smoke3D frame; the final smoke "
+                        "state is held constant\n");
+                    warnedAfterFdsData = true;
+                }
+                do {
+                    nextFdsUpdate += fds.updateInterval;
+                } while(nextFdsUpdate <= simulation.ElapsedTime());
+            }
+
             // Positions of this iteration's agents, so an agent that leaves can
             // be attributed to the exit it was standing at.
             std::unordered_map<uint64_t, Point> positionBeforeStep{};
