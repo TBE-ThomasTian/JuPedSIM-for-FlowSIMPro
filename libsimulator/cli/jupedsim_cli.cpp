@@ -1,7 +1,9 @@
 // SPDX-License-Identifier: LGPL-3.0-or-later
 #include "CollisionFreeSpeedModel.hpp"
 #include "CollisionFreeSpeedModelData.hpp"
+#include "CollisionGeometry.hpp"
 #include "FdsVisibilityField.hpp"
+#include "LineSegment.hpp"
 #include "GenericAgent.hpp"
 #include "GeometryBuilder.hpp"
 #include "Journey.hpp"
@@ -89,6 +91,10 @@ struct AgentConfig {
     double desiredSpeed{1.2};
     std::string ageGroup{};
     std::string avatarHint{};
+    // Seconds the agent stands still before it starts walking (v0 is held at 0).
+    // 0.0 == the previous behaviour: everybody moves from t = 0.
+    // Must stay last: the designated initializer below requires declaration order.
+    double preMovementTime{0.0};
 };
 
 struct AgentSpawnProfile {
@@ -98,6 +104,8 @@ struct AgentSpawnProfile {
     std::string ageGroup{};
     std::string avatarHint{};
     double weight{1.0};
+    // Handed to every agent generated from this profile.
+    double preMovementTime{0.0};
 };
 
 enum class DistributionMode {
@@ -201,6 +209,37 @@ struct ScenarioConfig {
         double minimumSpeedFactor{0.25};
         double visibilityFactor{3.0};
         double maximumVisibility{100.0};
+        // Smoke as a start trigger for people who are still waiting: once the
+        // visibility at their own position drops to this, they notice the fire
+        // and leave after smokeReaction seconds, even if their pre_movement time
+        // has not come yet. 0 disables it, which is the previous behaviour.
+        double smokeAlertsBelow{0.0};
+        double smokeReaction{0.0};
+        // Height at which a waiting person LOOKS for smoke. People do not stare
+        // at a plane in front of their nose: they see the layer building up
+        // overhead long before it reaches them. Sampled on its own grid plane,
+        // separate from eyeHeight, which stays what slows them down once walking.
+        double smokeWatchHeight{2.5};
+        // How far a person can look. Smoke is noticed anywhere within this
+        // radius, not only where the person stands - which is how one actually
+        // spots a fire. 0 means "own position only".
+        // Walls are NOT taken into account: somebody may notice smoke that is
+        // in fact behind a wall.
+        double smokeSightRange{0.0};
+        // Aperture of the view cone in degrees, centred on where the person
+        // faces. 360 = looks around, which is the default and the sane choice
+        // for somebody who is waiting: the orientation of a standing agent
+        // points at its exit (CollisionFreeSpeedModel.cpp: direction is derived
+        // from destination - pos every step, whatever the speed), so a narrow
+        // cone would mean staring at the door for minutes and never noticing a
+        // fire behind one's back. Narrow it only if that is what you intend.
+        double smokeSightAngle{360.0};
+        // Fraction of light the smoke has to swallow along a sight line before
+        // the person calls it smoke. 0.4 means "the view is 40 % dimmer than it
+        // should be" - roughly where a room visibly turns grey. This is what the
+        // eye reacts to; smokeAlertsBelow covers the other case, smoke that has
+        // arrived at the person's own position.
+        double smokeViewDimmed{0.4};
     };
     std::optional<FdsHazardConfig> fdsHazard{};
 
@@ -314,7 +353,12 @@ void PrintUsage(const char* program)
         "      <obstacle>...</obstacle>  <!-- optional, repeatable -->\n"
         "    </geometry>\n"
         "    <fds_hazard file=\"case.smv\" eye_height=\"1.60\" z_tolerance=\"0.25\"\n"
-        "                offset_x=\"0.0\" offset_y=\"0.0\" update_interval=\"0.5\">\n"
+        "                offset_x=\"0.0\" offset_y=\"0.0\" update_interval=\"0.5\"\n"
+        "                smoke_alerts_below=\"0.0\" smoke_reaction=\"0.0\">\n"
+        "      <!-- smoke_alerts_below: visibility at which a person who is still\n"
+        "           waiting notices the fire and leaves smoke_reaction seconds\n"
+        "           later, whether or not its pre_movement time has come.\n"
+        "           0 = off; the person then only starts on its own clock. -->\n"
         "      <visibility awareness_below=\"15.0\" severe_below=\"5.0\"\n"
         "                  minimum_speed_factor=\"0.25\" visibility_factor=\"3.0\"\n"
         "                  maximum_visibility=\"100.0\"/>\n"
@@ -336,6 +380,7 @@ void PrintUsage(const char* program)
         "          <!-- optional, use either <stair> or <ramp> -->\n"
         "    <agents>\n"
         "      <agent x=\"1\" y=\"1\" radius=\"0.2\" time_gap=\"1.0\" desired_speed=\"1.2\"\n"
+        "             pre_movement=\"0.0\"  <!-- seconds standing still before walking -->\n"
         "             age_group=\"young|adult|elderly\" avatar_hint=\"young|adult|grandpa|grandma\"/>\n"
         "      <!-- Or generate agents automatically -->\n"
         "      <distribution mode=\"by_number\" number_of_agents=\"200\"\n"
@@ -545,6 +590,8 @@ AgentSpawnProfile ParseSpawnProfile(
     profile.timeGap = node.get<double>("<xmlattr>.time_gap", profile.timeGap);
     profile.desiredSpeed = node.get<double>("<xmlattr>.desired_speed", profile.desiredSpeed);
     profile.weight = node.get<double>("<xmlattr>.weight", profile.weight);
+    profile.preMovementTime =
+        node.get<double>("<xmlattr>.pre_movement", profile.preMovementTime);
     profile.ageGroup =
         ToLowerAscii(node.get<std::string>("<xmlattr>.age_group", profile.ageGroup));
     profile.avatarHint =
@@ -561,6 +608,10 @@ AgentSpawnProfile ParseSpawnProfile(
     }
     if(profile.weight <= 0.0) {
         throw std::runtime_error(context + ".weight must be > 0");
+    }
+    // ">= 0", not "> 0": 0.0 is the default and means "starts immediately".
+    if(!std::isfinite(profile.preMovementTime) || profile.preMovementTime < 0.0) {
+        throw std::runtime_error(context + ".pre_movement must be finite and >= 0");
     }
     return profile;
 }
@@ -1252,9 +1303,143 @@ std::vector<AgentConfig> GenerateDistributedAgents(
                 .desiredSpeed = profile.desiredSpeed,
                 .ageGroup = profile.ageGroup,
                 .avatarHint = profile.avatarHint,
+                .preMovementTime = profile.preMovementTime,
             });
     }
     return generatedAgents;
+}
+
+/// True when a person standing at `position` would spot the smoke.
+///
+/// A person does not stare at the air in front of their nose: they look around,
+/// and they see a layer building up overhead. So this samples the watch plane
+/// not only under the person but on two rings around them, out to sightRange,
+/// and takes the worst visibility found. Anything at or below alertsBelow counts
+/// as "there is smoke over there, and I can see it".
+///
+/// Deliberately NOT modelled: walls. There is no occlusion test, so somebody can
+/// notice smoke that is in fact in the room next door. Erring towards noticing
+/// too early is the safer direction for the person, and the honest alternative -
+/// ray casting against the geometry - is a different piece of work.
+/// `position` and `facing` are in simulation coordinates, because that is what
+/// the geometry is in; `offset` converts a point to the FDS grid for sampling.
+/// Mixing the two would test the line of sight against walls that are somewhere
+/// else entirely.
+///
+/// What is measured is how far the person can actually SEE, not how dense the
+/// smoke happens to be where they stand. Along each sight line the extinction is
+/// integrated step by step; the view ends where the accumulated optical depth
+/// reaches the visibility factor - the same convention the field itself uses to
+/// turn density into a visibility. Looking through twenty metres of thin haze
+/// therefore blocks the view just as a few metres of thick smoke would, which is
+/// what the eye does and what a single sample at one point cannot reproduce.
+bool NoticesSmoke(
+    FdsVisibilityField& field,
+    const CollisionGeometry* geometry,
+    double time,
+    Point position,
+    Point facing,
+    Point offset,
+    double sightRange,
+    double sightAngleDegrees,
+    double alertsBelow,
+    double visibilityFactor,
+    double maximumVisibility,
+    double dimmedFraction)
+{
+    const auto here = field.Sample(time, Point{position.x + offset.x, position.y + offset.y});
+    if(here.has_value() && *here <= alertsBelow) {
+        return true;
+    }
+    if(sightRange <= 0.0) {
+        return false;
+    }
+
+    constexpr double kPi = 3.141592653589793;
+    constexpr double kTwoPi = 6.283185307179586;
+
+    // Where the cone points. A standing agent still has an orientation - it is
+    // recomputed every step from destination - pos - so this is "towards the
+    // exit", not "wherever the head happens to be". That is precisely why the
+    // full circle is the default.
+    double centre = 0.0;
+    const bool limited = sightAngleDegrees < 359.999;
+    if(limited) {
+        if(facing.x == 0.0 && facing.y == 0.0) {
+            return false; // no direction to look in
+        }
+        centre = std::atan2(facing.y, facing.x);
+    }
+    const double half = kPi * sightAngleDegrees / 360.0;
+
+    // Eight directions: enough to catch a smoke front from any side without
+    // turning the trigger into the run's hot loop. With a narrowed cone the same
+    // eight are spread across the aperture instead.
+    constexpr int kDirections = 8;
+    // One metre per step is well below the FDS cell size of this kind of case,
+    // so the integral does not miss a pocket of smoke; the cap keeps a very
+    // large sight range from becoming expensive.
+    constexpr double kStep = 1.0;
+    constexpr int kMaxSteps = 64;
+    const int steps =
+        std::min(kMaxSteps, std::max(1, static_cast<int>(std::ceil(sightRange / kStep))));
+    const double ds = sightRange / steps;
+
+    for(int direction = 0; direction < kDirections; ++direction) {
+        const double angle =
+            limited
+                ? centre - half +
+                      2.0 * half * (static_cast<double>(direction) + 0.5) / kDirections
+                : kTwoPi * static_cast<double>(direction) / kDirections;
+        const double dx = std::cos(angle);
+        const double dy = std::sin(angle);
+
+        double opticalDepth = 0.0;
+        Point previous = position;
+        for(int step = 1; step <= steps; ++step) {
+            const double distance = ds * step;
+            const Point probe{position.x + dx * distance, position.y + dy * distance};
+
+            // A wall ends the line of sight here. Tested segment by segment so
+            // the view stops AT the wall instead of being discarded entirely -
+            // smoke on this side of it is still seen.
+            if(geometry != nullptr && geometry->IntersectsAny(LineSegment{previous, probe})) {
+                break;
+            }
+            previous = probe;
+
+            const auto seen =
+                field.Sample(time, Point{probe.x + offset.x, probe.y + offset.y});
+            if(!seen.has_value()) {
+                continue; // outside the FDS meshes: nothing to see, nothing to add
+            }
+
+            // Local extinction from the local visibility, the inverse of what
+            // the field does - minus the floor that same cap implies. Clear air
+            // is reported as maximumVisibility rather than as infinity, so the
+            // naive inverse hands back visibilityFactor / maximumVisibility for
+            // air that contains nothing at all. Over a long enough sight line
+            // that alone accumulates into a "the view is dimmed" verdict and
+            // everybody sets off in a spotless building. Subtracting the floor
+            // makes clear air contribute exactly zero and stays continuous.
+            const double extinction =
+                std::max(0.0,
+                         visibilityFactor / std::max(*seen, 1e-6) -
+                             visibilityFactor / maximumVisibility);
+            opticalDepth += extinction * ds;
+
+            // How much of the view is lost: 1 - exp(-opticalDepth). This is what
+            // the eye reacts to. The "visibility" convention (3 / extinction) is
+            // far less sensitive - twenty-five metres of haze that swallows 70 %
+            // of the light still counts as sixty metres of visibility under it,
+            // which is why a point sample says "clear" for a view that plainly
+            // is not.
+            if(1.0 - std::exp(-opticalDepth) >= dimmedFraction) {
+                return true;
+            }
+        }
+    }
+    return false;
 }
 
 CliArgs ParseCliArgs(int argc, char** argv)
@@ -1400,6 +1585,45 @@ ScenarioConfig ParseScenarioConfig(const std::string& path)
                 "<xmlattr>.visibility_factor", fds.visibilityFactor);
             fds.maximumVisibility = visibilityNode->get<double>(
                 "<xmlattr>.maximum_visibility", fds.maximumVisibility);
+        }
+
+        fds.smokeAlertsBelow =
+            fdsNode.get<double>("<xmlattr>.smoke_alerts_below", fds.smokeAlertsBelow);
+        fds.smokeReaction =
+            fdsNode.get<double>("<xmlattr>.smoke_reaction", fds.smokeReaction);
+        if(!std::isfinite(fds.smokeAlertsBelow) || fds.smokeAlertsBelow < 0.0) {
+            throw std::runtime_error(
+                "scenario.fds_hazard.smoke_alerts_below must be finite and >= 0");
+        }
+        if(!std::isfinite(fds.smokeReaction) || fds.smokeReaction < 0.0) {
+            throw std::runtime_error(
+                "scenario.fds_hazard.smoke_reaction must be finite and >= 0");
+        }
+        fds.smokeWatchHeight =
+            fdsNode.get<double>("<xmlattr>.smoke_watch_height", fds.smokeWatchHeight);
+        if(!std::isfinite(fds.smokeWatchHeight) || fds.smokeWatchHeight <= 0.0) {
+            throw std::runtime_error(
+                "scenario.fds_hazard.smoke_watch_height must be finite and > 0");
+        }
+        fds.smokeSightRange =
+            fdsNode.get<double>("<xmlattr>.smoke_sight_range", fds.smokeSightRange);
+        if(!std::isfinite(fds.smokeSightRange) || fds.smokeSightRange < 0.0) {
+            throw std::runtime_error(
+                "scenario.fds_hazard.smoke_sight_range must be finite and >= 0");
+        }
+        fds.smokeViewDimmed =
+            fdsNode.get<double>("<xmlattr>.smoke_view_dimmed", fds.smokeViewDimmed);
+        if(!std::isfinite(fds.smokeViewDimmed) || fds.smokeViewDimmed <= 0.0 ||
+           fds.smokeViewDimmed >= 1.0) {
+            throw std::runtime_error(
+                "scenario.fds_hazard.smoke_view_dimmed must be finite and in (0, 1)");
+        }
+        fds.smokeSightAngle =
+            fdsNode.get<double>("<xmlattr>.smoke_sight_angle", fds.smokeSightAngle);
+        if(!std::isfinite(fds.smokeSightAngle) || fds.smokeSightAngle <= 0.0 ||
+           fds.smokeSightAngle > 360.0) {
+            throw std::runtime_error(
+                "scenario.fds_hazard.smoke_sight_angle must be finite and in (0, 360]");
         }
 
         if(!std::isfinite(fds.eyeHeight) || fds.eyeHeight <= 0.0) {
@@ -1639,6 +1863,8 @@ ScenarioConfig ParseScenarioConfig(const std::string& path)
         agent.radius = node.get<double>("<xmlattr>.radius", agent.radius);
         agent.timeGap = node.get<double>("<xmlattr>.time_gap", agent.timeGap);
         agent.desiredSpeed = node.get<double>("<xmlattr>.desired_speed", agent.desiredSpeed);
+        agent.preMovementTime =
+            node.get<double>("<xmlattr>.pre_movement", agent.preMovementTime);
         agent.ageGroup =
             ToLowerAscii(node.get<std::string>("<xmlattr>.age_group", std::string{}));
         agent.avatarHint =
@@ -1651,6 +1877,10 @@ ScenarioConfig ParseScenarioConfig(const std::string& path)
         }
         if(agent.desiredSpeed <= 0.0) {
             throw std::runtime_error(context + ".desired_speed must be > 0");
+        }
+        // ">= 0", not "> 0": 0.0 is the default and means "starts immediately".
+        if(!std::isfinite(agent.preMovementTime) || agent.preMovementTime < 0.0) {
+            throw std::runtime_error(context + ".pre_movement must be finite and >= 0");
         }
         config.agents.push_back(agent);
     };
@@ -2103,6 +2333,7 @@ int main(int argc, char** argv)
         }
 
         std::optional<FdsVisibilityField> fdsVisibility{};
+        std::optional<FdsVisibilityField> fdsWatchField{};
         std::optional<double> fdsSampleZ{};
         if(config.fdsHazard.has_value()) {
             auto& fds = *config.fdsHazard;
@@ -2134,6 +2365,40 @@ int main(int argc, char** argv)
                 fdsVisibility->SliceZ(),
                 fdsVisibility->FirstTime(),
                 fdsVisibility->LastTime());
+
+            // Second plane, only for noticing the fire: people see the layer
+            // building up overhead well before it sinks to their eyes. Loaded
+            // only when the trigger is actually used, it costs another pass over
+            // the Smoke3D data.
+            if(fds.smokeAlertsBelow > 0.0) {
+                double watchZ = fds.smokeWatchHeight;
+                if(config.sourceModel.has_value()) {
+                    watchZ += config.sourceModel->storeyElevation;
+                }
+                try {
+                    fdsWatchField = FdsVisibilityField::Load(
+                        *fds.smvFile,
+                        watchZ,
+                        fds.zTolerance,
+                        fds.visibilityFactor,
+                        fds.maximumVisibility);
+                    fmt::print(
+                        "fds_smoke_watch z={:.3f}m sight_range={:.2f}m\n",
+                        fdsWatchField->SliceZ(),
+                        fds.smokeSightRange);
+                } catch(const std::exception& error) {
+                    // A watch height above the mesh is a configuration mistake,
+                    // not a reason to abandon the run: fall back to eye height
+                    // and say so, rather than silently changing the meaning.
+                    fmt::print(
+                        stderr,
+                        "warning: smoke_watch_height {:.2f} m unusable ({}); noticing falls "
+                        "back to eye height\n",
+                        fds.smokeWatchHeight,
+                        error.what());
+                    fdsWatchField.reset();
+                }
+            }
         }
 
         fs::path outputPath{};
@@ -2264,12 +2529,26 @@ int main(int argc, char** argv)
         agentProfiles.reserve(allAgents.size());
         std::unordered_map<uint64_t, double> baseDesiredSpeeds{};
         baseDesiredSpeeds.reserve(allAgents.size());
+        // Release time in seconds per agent. Only agents with pre_movement > 0
+        // get an entry, so an ordinary scenario leaves this map empty and every
+        // addition below is skipped by an empty() check.
+        std::unordered_map<uint64_t, double> preMovementTimes{};
+        // Last speed factor <fds_hazard> assigned per agent. Only maintained
+        // while somebody is still being held back, so a released agent picks up
+        // the current smoke damping instead of full speed.
+        std::unordered_map<uint64_t, double> fdsSpeedFactors{};
 
         for(const auto& agentConfig : allAgents) {
             CollisionFreeSpeedModelData modelData{};
             modelData.timeGap = agentConfig.timeGap;
             modelData.v0 = agentConfig.desiredSpeed;
             modelData.radius = agentConfig.radius;
+            if(agentConfig.preMovementTime > 0.0) {
+                // Born standing, so the agent cannot move even in the very first
+                // step. v0 = 0 is explicitly allowed by the model
+                // (CollisionFreeSpeedModel.cpp: "constexpr double v0Min = 0.;").
+                modelData.v0 = 0.0;
+            }
 
             GenericAgent agent{
                 GenericAgent::ID::Invalid,
@@ -2279,7 +2558,13 @@ int main(int argc, char** argv)
                 Point{1.0, 0.0},
                 modelData};
             const auto agentId = simulation.AddAgent(std::move(agent)).getID();
+            // Deliberately the configured speed, not the held-back v0: the FDS
+            // block, the age classification and the .jsp profile record all read
+            // this and must stay unaffected.
             baseDesiredSpeeds.emplace(agentId, agentConfig.desiredSpeed);
+            if(agentConfig.preMovementTime > 0.0) {
+                preMovementTimes.emplace(agentId, agentConfig.preMovementTime);
+            }
 
             uint8_t ageGroupCode = AgeGroupCodeFromString(agentConfig.ageGroup);
             if(ageGroupCode == AGE_GROUP_UNKNOWN) {
@@ -2300,6 +2585,20 @@ int main(int argc, char** argv)
                     .timeGap = static_cast<float>(agentConfig.timeGap),
                     .radius = static_cast<float>(agentConfig.radius),
                 });
+        }
+
+        if(!preMovementTimes.empty() &&
+           (config.stair.has_value() || config.ramp.has_value())) {
+            // Stair::IsCompleted freezes the traversal budget the first time an
+            // agent is inside the stage radius, computing it from v0. An agent
+            // held at 0 that already starts inside gets max(0.1, 0.0) and stays
+            // slow for good. Starting outside the radius - the normal case - is
+            // unaffected, because the budget is only computed on arrival.
+            fmt::print(
+                stderr,
+                "warning: pre_movement together with <stair>/<ramp>: agents that start inside "
+                "the stage radius get their traversal time computed from v0 = 0 and are slowed "
+                "down permanently\n");
         }
 
         std::optional<FdsJspMetadata> fdsJspMetadata{};
@@ -2373,6 +2672,15 @@ int main(int argc, char** argv)
             return std::hypot(dx, dy);
         };
 
+        // Walls for the line-of-sight test. Simulation::Geo() returns by value,
+        // so it is fetched once here rather than per agent and per tick, and
+        // only when the smoke trigger is actually in use.
+        std::optional<CollisionGeometry> sightGeometry{};
+        if(config.fdsHazard.has_value() && config.fdsHazard->smokeAlertsBelow > 0.0 &&
+           config.fdsHazard->smokeSightRange > 0.0) {
+            sightGeometry = simulation.Geo();
+        }
+
         double nextFdsUpdate = 0.0;
         bool warnedOutsideFdsMeshes = false;
         bool warnedAfterFdsData = false;
@@ -2381,6 +2689,9 @@ int main(int argc, char** argv)
                simulation.ElapsedTime() + std::numeric_limits<double>::epsilon() >=
                    nextFdsUpdate) {
                 const auto& fds = *config.fdsHazard;
+                // Only worth recording while somebody is still held back.
+                // Without pre_movement this stays a single bool test per tick.
+                const bool trackFdsFactors = !preMovementTimes.empty();
                 std::size_t agentsOutsideMeshes = 0;
                 for(auto& agent : simulation.Agents()) {
                     auto& modelData = std::get<CollisionFreeSpeedModelData>(agent.model);
@@ -2390,6 +2701,9 @@ int main(int argc, char** argv)
                         Point{agent.pos.x + fds.offsetX, agent.pos.y + fds.offsetY});
                     if(!visibility.has_value()) {
                         modelData.v0 = baseSpeed;
+                        if(trackFdsFactors) {
+                            fdsSpeedFactors[agent.id.getID()] = 1.0;
+                        }
                         ++agentsOutsideMeshes;
                         continue;
                     }
@@ -2405,6 +2719,35 @@ int main(int argc, char** argv)
                                       (1.0 - fds.minimumSpeedFactor) * interpolation;
                     }
                     modelData.v0 = baseSpeed * speedFactor;
+                    if(trackFdsFactors) {
+                        fdsSpeedFactors[agent.id.getID()] = speedFactor;
+                    }
+
+                    // Smoke as a start trigger: somebody who is still waiting
+                    // and spots the fire leaves regardless of the clock. Only
+                    // ever brings the release forward, never delays it, so the
+                    // person goes at whichever comes first - alarm or smoke.
+                    if(fds.smokeAlertsBelow > 0.0 && !preMovementTimes.empty()) {
+                        const auto waitIt = preMovementTimes.find(agent.id.getID());
+                        if(waitIt != preMovementTimes.end() &&
+                           NoticesSmoke(
+                               fdsWatchField ? *fdsWatchField : *fdsVisibility,
+                               sightGeometry ? &*sightGeometry : nullptr,
+                               simulation.ElapsedTime(),
+                               agent.pos,
+                               agent.orientation,
+                               Point{fds.offsetX, fds.offsetY},
+                               fds.smokeSightRange,
+                               fds.smokeSightAngle,
+                               fds.smokeAlertsBelow,
+                               fds.visibilityFactor,
+                               fds.maximumVisibility,
+                               fds.smokeViewDimmed)) {
+                            const double noticed =
+                                simulation.ElapsedTime() + fds.smokeReaction;
+                            waitIt->second = std::min(waitIt->second, noticed);
+                        }
+                    }
                 }
                 if(agentsOutsideMeshes > 0 && !warnedOutsideFdsMeshes) {
                     fmt::print(
@@ -2425,6 +2768,36 @@ int main(int argc, char** argv)
                 do {
                     nextFdsUpdate += fds.updateInterval;
                 } while(nextFdsUpdate <= simulation.ElapsedTime());
+            }
+
+            // Pre-movement time. Must run AFTER the FDS block, whose v0 writes
+            // would otherwise send a still-waiting agent off for this step, and
+            // BEFORE simulation.Iterate(), which reads v0. Nothing in between
+            // reads v0; only positions are saved there.
+            if(!preMovementTimes.empty()) {
+                const double now = simulation.ElapsedTime();
+                for(auto& agent : simulation.Agents()) {
+                    const auto agentId = agent.id.getID();
+                    const auto it = preMovementTimes.find(agentId);
+                    if(it == preMovementTimes.end()) {
+                        continue; // already released, v0 belongs to the FDS block again
+                    }
+                    auto& modelData = std::get<CollisionFreeSpeedModelData>(agent.model);
+                    // ElapsedTime() is dt * iteration without accumulation drift,
+                    // the epsilon only covers the binary representation of dt.
+                    if(now + 1e-9 >= it->second) {
+                        const auto factorIt = fdsSpeedFactors.find(agentId);
+                        const double speedFactor =
+                            (factorIt != fdsSpeedFactors.end()) ? factorIt->second : 1.0;
+                        modelData.v0 = baseDesiredSpeeds.at(agentId) * speedFactor;
+                        // Erase on release: from here on v0 is the FDS block's
+                        // business, otherwise this pass would overwrite the smoke
+                        // damping between two FDS ticks.
+                        preMovementTimes.erase(it);
+                    } else {
+                        modelData.v0 = 0.0;
+                    }
+                }
             }
 
             // Positions of this iteration's agents, so an agent that leaves can
