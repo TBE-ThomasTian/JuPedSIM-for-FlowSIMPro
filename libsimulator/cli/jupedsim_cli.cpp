@@ -91,6 +91,10 @@ struct AgentConfig {
     double desiredSpeed{1.2};
     std::string ageGroup{};
     std::string avatarHint{};
+    // 1-based index into <exits>, 0 == not assigned. An assigned agent walks
+    // straight to that exit and is never offered the choice, which is what
+    // RiMEA Test 10 (Zuweisung von Rettungswegen) asks for.
+    size_t escapeRoute{0};
     // Seconds the agent stands still before it starts walking (v0 is held at 0).
     // 0.0 == the previous behaviour: everybody moves from t = 0.
     // Must stay last: the designated initializer below requires declaration order.
@@ -104,6 +108,8 @@ struct AgentSpawnProfile {
     std::string ageGroup{};
     std::string avatarHint{};
     double weight{1.0};
+    // 1-based index into <exits>, 0 == not assigned. See AgentConfig.
+    size_t escapeRoute{0};
     // Handed to every agent generated from this profile.
     double preMovementTime{0.0};
 };
@@ -381,7 +387,9 @@ void PrintUsage(const char* program)
         "    <agents>\n"
         "      <agent x=\"1\" y=\"1\" radius=\"0.2\" time_gap=\"1.0\" desired_speed=\"1.2\"\n"
         "             pre_movement=\"0.0\"  <!-- seconds standing still before walking -->\n"
-        "             age_group=\"young|adult|elderly\" avatar_hint=\"young|adult|grandpa|grandma\"/>\n"
+        "             age_group=\"young|adult|elderly\" avatar_hint=\"young|adult|grandpa|grandma\"\n"
+        "             escape_route=\"1\"  <!-- 1-based index into <exits>; omit to let\n"
+        "                                   the person choose per <exits mode=...> -->/>\n"
         "      <!-- Or generate agents automatically -->\n"
         "      <distribution mode=\"by_number\" number_of_agents=\"200\"\n"
         "                    distance_to_agents=\"0.45\" distance_to_polygon=\"0.20\" seed=\"42\" />\n"
@@ -391,7 +399,8 @@ void PrintUsage(const char* program)
         "        <segment min_radius=\"8\" max_radius=\"16\" density=\"1.0\"/>\n"
         "      </distribution>\n"
         "      <profile desired_speed=\"1.55\" radius=\"0.19\" time_gap=\"0.75\"\n"
-        "               age_group=\"young\" avatar_hint=\"young\" weight=\"1.0\"/>\n"
+        "               age_group=\"young\" avatar_hint=\"young\" weight=\"1.0\"\n"
+        "               escape_route=\"1\"/>  <!-- applies to every agent drawn from it -->\n"
         "    </agents>\n"
         "    <model type=\"collision_free_speed\" .../>\n"
         "  </scenario>\n",
@@ -596,6 +605,15 @@ AgentSpawnProfile ParseSpawnProfile(
         ToLowerAscii(node.get<std::string>("<xmlattr>.age_group", profile.ageGroup));
     profile.avatarHint =
         ToLowerAscii(node.get<std::string>("<xmlattr>.avatar_hint", profile.avatarHint));
+    {
+        // Signed on purpose: a negative value has to be rejected rather than
+        // wrap around into a huge index.
+        const auto route = node.get<int64_t>("<xmlattr>.escape_route", 0);
+        if(route < 0) {
+            throw std::runtime_error(context + ".escape_route must be >= 1");
+        }
+        profile.escapeRoute = static_cast<size_t>(route);
+    }
 
     if(profile.radius <= 0.0) {
         throw std::runtime_error(context + ".radius must be > 0");
@@ -1303,6 +1321,7 @@ std::vector<AgentConfig> GenerateDistributedAgents(
                 .desiredSpeed = profile.desiredSpeed,
                 .ageGroup = profile.ageGroup,
                 .avatarHint = profile.avatarHint,
+                .escapeRoute = profile.escapeRoute,
                 .preMovementTime = profile.preMovementTime,
             });
     }
@@ -1869,6 +1888,15 @@ ScenarioConfig ParseScenarioConfig(const std::string& path)
             ToLowerAscii(node.get<std::string>("<xmlattr>.age_group", std::string{}));
         agent.avatarHint =
             ToLowerAscii(node.get<std::string>("<xmlattr>.avatar_hint", std::string{}));
+        {
+            // See ParseAgentProfile: signed so a negative index is rejected
+            // instead of wrapping around.
+            const auto route = node.get<int64_t>("<xmlattr>.escape_route", 0);
+            if(route < 0) {
+                throw std::runtime_error(context + ".escape_route must be >= 1");
+            }
+            agent.escapeRoute = static_cast<size_t>(route);
+        }
         if(agent.radius <= 0.0) {
             throw std::runtime_error(context + ".radius must be > 0");
         }
@@ -2496,6 +2524,9 @@ int main(int argc, char** argv)
         }
 
         BaseStage::ID initialStage = downstreamStage;
+        // Shared with the per-exit journeys below, so an assigned agent still
+        // walks the stair or ramp before heading to its exit.
+        std::optional<BaseStage::ID> transitStage{};
         if(config.stair.has_value()) {
             const auto& stair = *config.stair;
             const auto stairStage = simulation.AddStage(StairDescription{
@@ -2508,6 +2539,7 @@ int main(int argc, char** argv)
             });
             journeyStages.emplace(stairStage, FixedTransitionDescription(downstreamStage));
             initialStage = stairStage;
+            transitStage = stairStage;
         } else if(config.ramp.has_value()) {
             const auto& ramp = *config.ramp;
             const auto rampStage = simulation.AddStage(RampDescription{
@@ -2522,8 +2554,38 @@ int main(int argc, char** argv)
             });
             journeyStages.emplace(rampStage, FixedTransitionDescription(downstreamStage));
             initialStage = rampStage;
+            transitStage = rampStage;
         }
         const auto journeyId = simulation.AddJourney(journeyStages);
+
+        // Agents with escape_route get their own journey holding just that exit,
+        // rather than starting on the shared journey with stageId set to the
+        // exit. That matters because the shared journey carries the decision
+        // point's AdaptiveTransition, which re-decides for anyone en route to one
+        // of its candidates (see Journey::reevaluators) and would pull an
+        // assigned agent off its route again. A journey without that transition
+        // has nothing to reconsider, so the assignment holds.
+        std::map<size_t, std::pair<Journey::ID, BaseStage::ID>> assignedJourneys{};
+        const auto journeyForExit =
+            [&](size_t exitIndex) -> std::pair<Journey::ID, BaseStage::ID> {
+            if(const auto it = assignedJourneys.find(exitIndex);
+               it != std::end(assignedJourneys)) {
+                return it->second;
+            }
+            const auto target = exitStages.at(exitIndex);
+            std::map<BaseStage::ID, TransitionDescription> stages{};
+            stages.emplace(target, NonTransitionDescription{});
+            BaseStage::ID start = target;
+            if(transitStage.has_value()) {
+                // Same stage object as the shared journey; only the transition
+                // hanging off it differs, which is per journey anyway.
+                stages.emplace(*transitStage, FixedTransitionDescription(target));
+                start = *transitStage;
+            }
+            const auto entry = std::make_pair(simulation.AddJourney(stages), start);
+            assignedJourneys.emplace(exitIndex, entry);
+            return entry;
+        };
 
         std::vector<AgentProfileEntry> agentProfiles{};
         agentProfiles.reserve(allAgents.size());
@@ -2550,10 +2612,23 @@ int main(int argc, char** argv)
                 modelData.v0 = 0.0;
             }
 
+            auto agentJourney = journeyId;
+            auto agentStage = initialStage;
+            if(agentConfig.escapeRoute > 0) {
+                if(agentConfig.escapeRoute > exitStages.size()) {
+                    throw std::runtime_error(fmt::format(
+                        "escape_route={} exceeds the number of exits ({})",
+                        agentConfig.escapeRoute,
+                        exitStages.size()));
+                }
+                std::tie(agentJourney, agentStage) =
+                    journeyForExit(agentConfig.escapeRoute - 1);
+            }
+
             GenericAgent agent{
                 GenericAgent::ID::Invalid,
-                journeyId,
-                initialStage,
+                agentJourney,
+                agentStage,
                 agentConfig.position,
                 Point{1.0, 0.0},
                 modelData};
