@@ -119,6 +119,7 @@ enum class DistributionMode {
     ByDensity,
     InCirclesByNumber,
     InCirclesByDensity,
+    InRectanglesByNumber,
     UntilFilled,
     ByPercentage
 };
@@ -137,6 +138,17 @@ struct CircleSegmentConfig {
     std::optional<double> density{};
 };
 
+/// One <zone> of an in_rectangles_by_number distribution: a named room gets its
+/// own number of persons, placed at run time rather than at export time, so a
+/// repeated run with a different seed gives a different arrangement.
+struct RectangleZoneConfig {
+    double minX{0.0};
+    double minY{0.0};
+    double maxX{0.0};
+    double maxY{0.0};
+    uint64_t numberOfAgents{0};
+};
+
 struct AgentDistributionConfig {
     DistributionMode mode{DistributionMode::ByNumber};
     double distanceToAgents{0.4};
@@ -146,6 +158,7 @@ struct AgentDistributionConfig {
     std::optional<double> percent{};
     std::optional<Point> centerPoint{};
     std::vector<CircleSegmentConfig> circleSegments{};
+    std::vector<RectangleZoneConfig> rectangleZones{};
     std::optional<uint64_t> seed{};
     uint64_t maxIterations{10000};
     uint32_t k{30};
@@ -398,6 +411,13 @@ void PrintUsage(const char* program)
         "        <segment min_radius=\"0\" max_radius=\"8\" density=\"2.0\"/>\n"
         "        <segment min_radius=\"8\" max_radius=\"16\" density=\"1.0\"/>\n"
         "      </distribution>\n"
+        "      <!-- One headcount per room; positions are drawn per seed, so a\n"
+        "           repeated run gives another arrangement -->\n"
+        "      <distribution mode=\"in_rectangles_by_number\"\n"
+        "                    distance_to_agents=\"0.45\" distance_to_polygon=\"0.20\" seed=\"42\">\n"
+        "        <zone min_x=\"1\" min_y=\"1\" max_x=\"8\" max_y=\"8\" number_of_agents=\"40\"/>\n"
+        "        <zone min_x=\"11\" min_y=\"1\" max_x=\"18\" max_y=\"8\" number_of_agents=\"25\"/>\n"
+        "      </distribution>\n"
         "      <profile desired_speed=\"1.55\" radius=\"0.19\" time_gap=\"0.75\"\n"
         "               age_group=\"young\" avatar_hint=\"young\" weight=\"1.0\"\n"
         "               escape_route=\"1\"/>  <!-- applies to every agent drawn from it -->\n"
@@ -555,6 +575,9 @@ DistributionMode ParseDistributionMode(const std::string& value)
     if(mode == "in_circles_by_density") {
         return DistributionMode::InCirclesByDensity;
     }
+    if(mode == "in_rectangles_by_number") {
+        return DistributionMode::InRectanglesByNumber;
+    }
     if(mode == "until_filled") {
         return DistributionMode::UntilFilled;
     }
@@ -564,7 +587,7 @@ DistributionMode ParseDistributionMode(const std::string& value)
     throw std::runtime_error(
         "Unknown distribution mode '" + value +
         "'. Supported: by_number, by_density, in_circles_by_number, "
-        "in_circles_by_density, until_filled, by_percentage");
+        "in_circles_by_density, in_rectangles_by_number, until_filled, by_percentage");
 }
 
 std::optional<uint64_t> ParseOptionalSeed(
@@ -694,6 +717,23 @@ AgentDistributionConfig ParseDistributionConfig(const pt::ptree& node, const std
                 ParseSpawnProfile(child, context + ".profile", config.defaultProfile));
             continue;
         }
+        if(tag == "zone") {
+            RectangleZoneConfig zone{};
+            zone.minX = RequiredValue<double>(child, "<xmlattr>.min_x", context + ".zone.min_x");
+            zone.minY = RequiredValue<double>(child, "<xmlattr>.min_y", context + ".zone.min_y");
+            zone.maxX = RequiredValue<double>(child, "<xmlattr>.max_x", context + ".zone.max_x");
+            zone.maxY = RequiredValue<double>(child, "<xmlattr>.max_y", context + ".zone.max_y");
+            zone.numberOfAgents = RequiredValue<uint64_t>(
+                child, "<xmlattr>.number_of_agents", context + ".zone.number_of_agents");
+            if(zone.maxX <= zone.minX || zone.maxY <= zone.minY) {
+                throw std::runtime_error(context + ".zone must have max_x > min_x and max_y > min_y");
+            }
+            if(zone.numberOfAgents == 0) {
+                throw std::runtime_error(context + ".zone.number_of_agents must be > 0");
+            }
+            config.rectangleZones.push_back(zone);
+            continue;
+        }
         if(tag == "segment" || tag == "circle") {
             CircleSegmentConfig segment{};
             segment.minRadius =
@@ -755,6 +795,12 @@ AgentDistributionConfig ParseDistributionConfig(const pt::ptree& node, const std
                 throw std::runtime_error(context + " requires at least one <segment/>");
             }
             ValidateCircleSegments(config.circleSegments, context);
+            break;
+        }
+        case DistributionMode::InRectanglesByNumber: {
+            if(config.rectangleZones.empty()) {
+                throw std::runtime_error(context + " requires at least one <zone/>");
+            }
             break;
         }
         case DistributionMode::UntilFilled: {
@@ -1130,6 +1176,42 @@ std::vector<AgentConfig> GenerateDistributedAgents(
                     failedAttempts = 0;
                 } else {
                     ++failedAttempts;
+                }
+            }
+            break;
+        }
+        case DistributionMode::InRectanglesByNumber: {
+            // One zone per room, each with its own headcount. Unlike explicitly
+            // exported <agent> elements the arrangement is drawn here, so a
+            // repeated run with another seed gives another arrangement - which is
+            // what a statistical evaluation over several runs needs.
+            for(size_t z = 0; z < dist.rectangleZones.size(); ++z) {
+                const auto& zoneConfig = dist.rectangleZones[z];
+                const BoundingBox zoneBox{
+                    zoneConfig.minX, zoneConfig.minY, zoneConfig.maxX, zoneConfig.maxY};
+                uint64_t created = 0;
+                uint64_t failedAttempts = 0;
+                while(created < zoneConfig.numberOfAgents) {
+                    if(failedAttempts > dist.maxIterations) {
+                        throw std::runtime_error(
+                            "Distribution in_rectangles_by_number could not place all agents "
+                            "of zone " + std::to_string(z + 1) + ". Placed " +
+                            std::to_string(created) + " of " +
+                            std::to_string(zoneConfig.numberOfAgents) +
+                            ". The zone may be too small, or overlap a wall or an exit.");
+                    }
+                    const Point candidate = RandomPointInBox(zoneBox, rng);
+                    if(MeetsPlacementConstraints(
+                           geometry,
+                           candidate,
+                           effectiveDistanceToPolygon,
+                           grid)) {
+                        acceptPoint(candidate);
+                        ++created;
+                        failedAttempts = 0;
+                    } else {
+                        ++failedAttempts;
+                    }
                 }
             }
             break;
