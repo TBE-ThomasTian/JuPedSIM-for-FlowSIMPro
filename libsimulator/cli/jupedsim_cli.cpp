@@ -2641,6 +2641,11 @@ int main(int argc, char** argv)
             size_t maxQueue{0};
             double maxQueueTime{0.0};
             size_t left{0};              // persons that went through this exit
+            // Persons already standing inside the polygon when the simulation
+            // started. They count towards left so the tally matches the
+            // population, but they never traversed the opening, so they are
+            // kept out of the flow window.
+            size_t presentAtStart{0};
             double firstLeftTime{-1.0};
             double lastLeftTime{0.0};
         };
@@ -2679,6 +2684,51 @@ int main(int argc, char** argv)
         if(config.fdsHazard.has_value() && config.fdsHazard->smokeAlertsBelow > 0.0 &&
            config.fdsHazard->smokeSightRange > 0.0) {
             sightGeometry = simulation.Geo();
+        }
+
+        // An agent placed inside an exit polygon is queued for removal already by
+        // Simulation::AddAgent, which runs the strategical decision system on the
+        // new agent (Simulation.cpp) and lets Exit::IsCompleted push it onto the
+        // removal list. The first Iterate() drains and clears that list before the
+        // loop below can attribute anyone, so without this pass those persons
+        // would silently disappear from the exit tally - the very number a
+        // Nachweis quotes. Reachable e.g. when a <distribution> spawn area
+        // overlaps an exit; it depends on the seed, which is why it went unnoticed.
+        if(!exitAreas.empty() && !simulation.RemovedAgents().empty()) {
+            std::unordered_map<uint64_t, Point> spawnPositions{};
+            for(const auto& agent : simulation.Agents()) {
+                spawnPositions[agent.id.getID()] = agent.pos;
+            }
+            size_t presentAtStartTotal = 0;
+            for(const auto& removed : simulation.RemovedAgents()) {
+                const auto it = spawnPositions.find(removed.getID());
+                if(it == spawnPositions.end()) {
+                    continue;
+                }
+                size_t nearest = 0;
+                double nearestDistance = std::numeric_limits<double>::max();
+                for(size_t e = 0; e < exitAreas.size(); ++e) {
+                    const double d = distanceToExit(exitAreas[e], it->second);
+                    if(d < nearestDistance) {
+                        nearestDistance = d;
+                        nearest = e;
+                    }
+                }
+                // Counted so the tally matches the population, but deliberately
+                // left out of first/lastLeftTime: these persons never crossed the
+                // opening, and letting them stretch the window to t=0 would
+                // understate the specific flow.
+                ++exitAreas[nearest].left;
+                ++exitAreas[nearest].presentAtStart;
+                ++presentAtStartTotal;
+            }
+            if(presentAtStartTotal > 0) {
+                fmt::print(
+                    stderr,
+                    "warning: {} agents were already inside an exit when the simulation "
+                    "started; they are counted in left= but excluded from the flow window\n",
+                    presentAtStartTotal);
+            }
         }
 
         double nextFdsUpdate = 0.0;
@@ -2882,8 +2932,12 @@ int main(int argc, char** argv)
             const ExitArea& area = exitAreas[e];
             const double width = std::min(area.maxX - area.minX, area.maxY - area.minY);
             const double span = area.lastLeftTime - std::max(0.0, area.firstLeftTime);
-            const double flow = (area.left > 1 && span > 1e-9)
-                                    ? static_cast<double>(area.left) / span
+            // Only persons that actually crossed the opening carry information
+            // about its capacity; those already standing inside at t=0 are in
+            // left= for the population count but must not inflate the flow.
+            const size_t traversed = area.left - area.presentAtStart;
+            const double flow = (traversed > 1 && span > 1e-9)
+                                    ? static_cast<double>(traversed) / span
                                     : 0.0;
             fmt::print(
                 "exit={} width={:.2f} m left={} first={:.1f} s last={:.1f} s flow={:.2f} persons/s\n",
