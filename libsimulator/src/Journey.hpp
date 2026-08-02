@@ -159,6 +159,14 @@ class Transition
 public:
     virtual ~Transition() = default;
     virtual BaseStage* NextStage(const GenericAgent& agent) = 0;
+
+    /// Stages this transition wants to keep re-deciding for after an agent has
+    /// already been sent to one of them, or nullptr to decide only once.
+    /// Opting in makes Journey::Target() re-run NextStage() on every frame while
+    /// the agent is en route, which is what gives decision_interval and
+    /// reconsideration_threshold an effect. Round robin and least targeted
+    /// deliberately do not opt in: re-drawing them every frame is meaningless.
+    virtual const std::vector<BaseStage*>* ReevaluationCandidates() const { return nullptr; }
 };
 
 class FixedTransition : public Transition
@@ -322,6 +330,11 @@ public:
         }
     }
 
+    const std::vector<BaseStage*>* ReevaluationCandidates() const override
+    {
+        return &targetCandidates;
+    }
+
     BaseStage* NextStage(const GenericAgent& agent) override
     {
         auto& state = decisionState[agent.id];
@@ -377,22 +390,50 @@ public:
 private:
     ID id{};
     std::map<BaseStage::ID, JourneyNode> stages{};
+    /// Maps a candidate stage back to the transition that decided for it, so an
+    /// agent already walking towards that stage can still be re-decided. Keyed by
+    /// the candidate and not by the deciding node, because by the time we want to
+    /// reconsider, agent.stageId is the candidate. Holds a raw Transition* rather
+    /// than the unique_ptr so Target() stays const without a const_cast.
+    std::map<BaseStage::ID, Transition*> reevaluators{};
 
 public:
     ~Journey() = default;
 
-    Journey(std::map<BaseStage::ID, JourneyNode> stages_) : stages(std::move(stages_)) {}
+    Journey(std::map<BaseStage::ID, JourneyNode> stages_) : stages(std::move(stages_))
+    {
+        // After the move, so the recorded pointers refer to the stored nodes.
+        for(auto& [stageId, node] : stages) {
+            const auto* candidates = node.transition->ReevaluationCandidates();
+            if(candidates == nullptr) {
+                continue;
+            }
+            for(auto* candidate : *candidates) {
+                reevaluators[candidate->Id()] = node.transition.get();
+            }
+        }
+    }
 
     ID Id() const { return id; }
 
     std::tuple<Point, BaseStage::ID> Target(const GenericAgent& agent) const
     {
-        auto& node = stages.at(agent.stageId);
-        auto stage = node.stage;
-        const auto& transition = node.transition;
+        const auto& node = stages.at(agent.stageId);
+        auto* stage = node.stage;
 
+        // Must stay first and be evaluated exactly once: Exit::IsCompleted queues
+        // the agent for removal as a side effect. Returning right here also keeps
+        // an agent from being switched to another exit on its removal frame.
         if(stage->IsCompleted(agent)) {
-            stage = transition->NextStage(agent);
+            stage = node.transition->NextStage(agent);
+            return std::make_tuple(stage->Target(agent), stage->Id());
+        }
+
+        // En route to a stage that was picked by a transition which wants to keep
+        // deciding. Without this the choice made when the agent passed the
+        // decision point would stand for the rest of the run.
+        if(const auto iter = reevaluators.find(agent.stageId); iter != std::end(reevaluators)) {
+            stage = iter->second->NextStage(agent);
         }
 
         return std::make_tuple(stage->Target(agent), stage->Id());
