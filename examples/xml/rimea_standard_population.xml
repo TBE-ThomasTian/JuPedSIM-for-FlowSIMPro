@@ -1,0 +1,24 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<scenario dt="0.01" max_iterations="60000">
+  <geometry><walkable>
+    <vertex x="0" y="0"/><vertex x="50" y="0"/><vertex x="50" y="20"/><vertex x="0" y="20"/>
+  </walkable></geometry>
+  <exit><vertex x="49.5" y="9"/><vertex x="50" y="9"/><vertex x="50" y="11"/><vertex x="49.5" y="11"/></exit>
+  <agents>
+    <distribution mode="by_number" number_of_agents="500"
+                  distance_to_agents="0.45" distance_to_polygon="0.2" seed="42">
+      <!-- RiMEA 3.2.4 / DIN Bild F.1 Standardpopulation -->
+      <population age_mean="50" age_sigma="20" age_min="10" age_max="85"
+                  female_share="0.5" male_speed_bonus="0.109" speed_sigma_percent="19.3">
+        <speed age="10" v="1.05"/>
+        <speed age="20" v="1.61"/>
+        <speed age="30" v="1.54"/>
+        <speed age="40" v="1.48"/>
+        <speed age="50" v="1.41"/>
+        <speed age="60" v="1.27"/>
+        <speed age="70" v="1.05"/>
+        <speed age="85" v="0.68"/>
+      </population>
+    </distribution>
+  </agents>
+</scenario>

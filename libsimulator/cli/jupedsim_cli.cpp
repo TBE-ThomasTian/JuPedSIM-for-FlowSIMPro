@@ -138,6 +138,40 @@ struct CircleSegmentConfig {
     std::optional<double> density{};
 };
 
+/// Walking speed over age, as RiMEA 4.1.1 Abb. 3 / DIN 18009-2 Bild F.2 show it
+/// after Weidmann. Linearly interpolated between knots, clamped outside.
+struct SpeedOverAgeKnot {
+    double age{};
+    double speed{};
+};
+
+/// The population a <distribution> draws from when speeds are to follow age
+/// rather than a handful of fixed profiles.
+///
+/// Both standards define the same default when nothing is known about the
+/// occupants (RiMEA 3.2.4, DIN Bild F.1): half men, half women, age normally
+/// distributed with mean 50 and standard deviation 20, truncated to 10..85, and
+/// the speed read off the age curve.
+///
+/// The knots are deliberately part of the scenario rather than compiled in.
+/// Abb. 3 is a diagram, not a table, so any numbers taken from it carry reading
+/// error; a Nachweis has to be able to state which values were used and to
+/// replace them with the primary source.
+struct PopulationConfig {
+    double ageMean{50.0};
+    double ageSigma{20.0};
+    double ageMin{10.0};
+    double ageMax{85.0};
+    double femaleShare{0.5};
+    /// Men are on average this much faster than women. Both standards state
+    /// 10.9 % (RiMEA 3.2.2.2, DIN Bild F.2 note 2).
+    double maleSpeedBonus{0.109};
+    /// Spread around the age curve. DIN Bild F.2 note 1 quotes Weidmann with
+    /// sigma = 0.26 m/s, i.e. 19.3 % of the mean.
+    double speedSigmaPercent{19.3};
+    std::vector<SpeedOverAgeKnot> speedOverAge{};
+};
+
 /// One <zone> of an in_rectangles_by_number distribution: a named room gets its
 /// own number of persons, placed at run time rather than at export time, so a
 /// repeated run with a different seed gives a different arrangement.
@@ -164,6 +198,10 @@ struct AgentDistributionConfig {
     uint32_t k{30};
     AgentSpawnProfile defaultProfile{};
     std::vector<AgentSpawnProfile> profiles{};
+    /// Set by a <population> child. Takes precedence over <profile> children for
+    /// speed and age group; radius, time gap, pre-movement and escape route
+    /// still come from the default profile.
+    std::optional<PopulationConfig> population{};
 };
 
 struct ScenarioConfig {
@@ -435,6 +473,23 @@ void PrintUsage(const char* program)
         "                    distance_to_agents=\"0.45\" distance_to_polygon=\"0.20\" seed=\"42\">\n"
         "        <zone min_x=\"1\" min_y=\"1\" max_x=\"8\" max_y=\"8\" number_of_agents=\"40\"/>\n"
         "        <zone min_x=\"11\" min_y=\"1\" max_x=\"18\" max_y=\"8\" number_of_agents=\"25\"/>\n"
+        "      </distribution>\n"
+        "      <!-- Speeds following age instead of a few fixed profiles. The knots\n"
+        "           are NOT built in: RiMEA Abb. 3 / DIN 18009-2 Bild F.2 is a\n"
+        "           diagram, so the values used must be stated here and be citable.\n"
+        "           Defaults below are the standard population of RiMEA 3.2.4 /\n"
+        "           DIN Bild F.1. speed_sigma_percent is the spread AROUND the curve\n"
+        "           at a given age (DIN Bild F.2 note 1: sigma = 0.26 m/s = 19.3 %);\n"
+        "           the spread over the whole population comes out larger because\n"
+        "           age and sex vary on top of it. -->\n"
+        "      <distribution mode=\"by_number\" number_of_agents=\"500\" seed=\"42\">\n"
+        "        <population age_mean=\"50\" age_sigma=\"20\" age_min=\"10\" age_max=\"85\"\n"
+        "                    female_share=\"0.5\" male_speed_bonus=\"0.109\"\n"
+        "                    speed_sigma_percent=\"19.3\">\n"
+        "          <speed age=\"20\" v=\"1.61\"/>\n"
+        "          <speed age=\"50\" v=\"1.41\"/>\n"
+        "          <speed age=\"85\" v=\"0.68\"/>\n"
+        "        </population>\n"
         "      </distribution>\n"
         "      <profile desired_speed=\"1.55\" radius=\"0.19\" time_gap=\"0.75\"\n"
         "               age_group=\"young\" avatar_hint=\"young\" weight=\"1.0\"\n"
@@ -733,6 +788,59 @@ AgentDistributionConfig ParseDistributionConfig(const pt::ptree& node, const std
         if(tag == "profile") {
             config.profiles.push_back(
                 ParseSpawnProfile(child, context + ".profile", config.defaultProfile));
+            continue;
+        }
+        if(tag == "population") {
+            PopulationConfig population{};
+            population.ageMean = child.get<double>("<xmlattr>.age_mean", population.ageMean);
+            population.ageSigma = child.get<double>("<xmlattr>.age_sigma", population.ageSigma);
+            population.ageMin = child.get<double>("<xmlattr>.age_min", population.ageMin);
+            population.ageMax = child.get<double>("<xmlattr>.age_max", population.ageMax);
+            population.femaleShare =
+                child.get<double>("<xmlattr>.female_share", population.femaleShare);
+            population.maleSpeedBonus =
+                child.get<double>("<xmlattr>.male_speed_bonus", population.maleSpeedBonus);
+            population.speedSigmaPercent =
+                child.get<double>("<xmlattr>.speed_sigma_percent", population.speedSigmaPercent);
+            for(const auto& [speedTag, speedNode] : child) {
+                if(speedTag != "speed") {
+                    continue;
+                }
+                SpeedOverAgeKnot knot{};
+                knot.age = RequiredValue<double>(
+                    speedNode, "<xmlattr>.age", context + ".population.speed.age");
+                knot.speed = RequiredValue<double>(
+                    speedNode, "<xmlattr>.v", context + ".population.speed.v");
+                if(knot.speed <= 0.0) {
+                    throw std::runtime_error(context + ".population.speed.v must be > 0");
+                }
+                population.speedOverAge.push_back(knot);
+            }
+            if(population.speedOverAge.size() < 2) {
+                throw std::runtime_error(
+                    context + ".population requires at least two <speed age=\"..\" v=\"..\"/> "
+                              "knots. They are not built in on purpose: RiMEA Abb. 3 / DIN "
+                              "Bild F.2 is a diagram, so the values used have to be stated in "
+                              "the scenario and be citable in the report.");
+            }
+            std::sort(
+                std::begin(population.speedOverAge),
+                std::end(population.speedOverAge),
+                [](const auto& a, const auto& b) { return a.age < b.age; });
+            if(population.ageMax <= population.ageMin) {
+                throw std::runtime_error(context + ".population.age_max must be > age_min");
+            }
+            if(population.ageSigma < 0.0) {
+                throw std::runtime_error(context + ".population.age_sigma must be >= 0");
+            }
+            if(population.femaleShare < 0.0 || population.femaleShare > 1.0) {
+                throw std::runtime_error(context + ".population.female_share must be in [0, 1]");
+            }
+            if(population.speedSigmaPercent < 0.0) {
+                throw std::runtime_error(
+                    context + ".population.speed_sigma_percent must be >= 0");
+            }
+            config.population = population;
             continue;
         }
         if(tag == "zone") {
@@ -1110,6 +1218,88 @@ std::vector<Point> DistributeUntilFilled(
     return created;
 }
 
+/// Speed at `age`, linearly interpolated between the knots and clamped outside
+/// their range. Clamping rather than extrapolating on purpose: beyond the ends
+/// of Abb. 3 there is no data, and a straight line would run into negative
+/// speeds within a few years.
+double SpeedAtAge(const std::vector<SpeedOverAgeKnot>& knots, double age)
+{
+    if(age <= knots.front().age) {
+        return knots.front().speed;
+    }
+    if(age >= knots.back().age) {
+        return knots.back().speed;
+    }
+    for(size_t i = 0; i + 1 < knots.size(); ++i) {
+        const auto& lo = knots[i];
+        const auto& hi = knots[i + 1];
+        if(age >= lo.age && age <= hi.age) {
+            const double span = hi.age - lo.age;
+            const double t = span > 0.0 ? (age - lo.age) / span : 0.0;
+            return lo.speed + t * (hi.speed - lo.speed);
+        }
+    }
+    return knots.back().speed;
+}
+
+/// Draws one person from the population: an age, a sex, and the speed that
+/// follows from both plus the spread around the curve.
+AgentSpawnProfile DrawFromPopulation(
+    const PopulationConfig& population,
+    const AgentSpawnProfile& base,
+    std::mt19937_64& rng)
+{
+    AgentSpawnProfile profile = base;
+
+    double age = population.ageMean;
+    if(population.ageSigma > 0.0) {
+        std::normal_distribution<double> ageDistribution(population.ageMean, population.ageSigma);
+        // Redraw rather than clamp: clamping would pile people up on the two
+        // limits, which is not what "normally distributed between minimum and
+        // maximum" means.
+        for(int attempt = 0; attempt < 1000; ++attempt) {
+            age = ageDistribution(rng);
+            if(age >= population.ageMin && age <= population.ageMax) {
+                break;
+            }
+            age = std::clamp(age, population.ageMin, population.ageMax);
+        }
+    }
+
+    std::uniform_real_distribution<double> sexDraw(0.0, 1.0);
+    const bool female = sexDraw(rng) < population.femaleShare;
+
+    // The curve is the population mean. Splitting it so the mean is preserved:
+    // men get half the difference up, women half of it down.
+    const double curveSpeed = SpeedAtAge(population.speedOverAge, age);
+    const double half = population.maleSpeedBonus * 0.5;
+    double speed = curveSpeed * (female ? (1.0 - half) : (1.0 + half));
+
+    if(population.speedSigmaPercent > 0.0) {
+        std::normal_distribution<double> spread(
+            0.0, speed * population.speedSigmaPercent / 100.0);
+        // Two sigma, as the tests in Annex 1 of RiMEA use it, and it keeps the
+        // draw away from zero or negative speeds.
+        const double limit = 2.0 * speed * population.speedSigmaPercent / 100.0;
+        speed += std::clamp(spread(rng), -limit, limit);
+    }
+    profile.desiredSpeed = std::max(0.05, speed);
+
+    // Only for display and for the age band written into the .jsp; the speed
+    // above is what actually moves the person.
+    if(age < 30.0) {
+        profile.ageGroup = "young";
+        profile.avatarHint = female ? "young_female" : "young_male";
+    } else if(age < 60.0) {
+        profile.ageGroup = "adult";
+        profile.avatarHint = female ? "adult_female" : "adult_male";
+    } else {
+        profile.ageGroup = "elderly";
+        profile.avatarHint = female ? "elderly_female" : "elderly_male";
+    }
+    return profile;
+}
+
 const AgentSpawnProfile& PickProfile(
     const std::vector<AgentSpawnProfile>& profiles,
     std::mt19937_64& rng)
@@ -1412,7 +1602,15 @@ std::vector<AgentConfig> GenerateDistributedAgents(
     std::mt19937_64 profileRng(
         dist.seed.has_value() ? (*dist.seed + 0xD1B54A32D192ED03ull) : std::random_device{}());
     for(const auto& p : generatedPoints) {
-        const auto& profile = PickProfile(effectiveProfiles, profileRng);
+        const auto& picked = PickProfile(effectiveProfiles, profileRng);
+        // A <population> overrides speed and age group; everything else - radius,
+        // time gap, pre-movement, escape route - still comes from the profile,
+        // so the two can be combined.
+        const AgentSpawnProfile drawn =
+            dist.population.has_value()
+                ? DrawFromPopulation(*dist.population, picked, profileRng)
+                : picked;
+        const AgentSpawnProfile& profile = drawn;
         generatedAgents.push_back(
             AgentConfig{
                 .position = p,
