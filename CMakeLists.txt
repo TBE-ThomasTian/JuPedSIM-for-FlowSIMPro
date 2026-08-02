@@ -54,6 +54,13 @@ print_var(BUILD_BENCHMARKS)
 set(BUILD_XML_CLI OFF CACHE BOOL "Build native XML CLI executable")
 print_var(BUILD_XML_CLI)
 
+set(BUILD_INSTALLER OFF CACHE BOOL
+  "Create install rules and CPack packages for the FlowSIMPro Evac Add-On. Requires BUILD_XML_CLI")
+print_var(BUILD_INSTALLER)
+if(BUILD_INSTALLER AND NOT BUILD_XML_CLI)
+    message(FATAL_ERROR "BUILD_INSTALLER=ON requires BUILD_XML_CLI=ON: the jupedsim CLI is what gets packaged")
+endif()
+
 set(BUILD_PYTHON_BINDINGS OFF CACHE BOOL "Build Python bindings")
 print_var(BUILD_PYTHON_BINDINGS)
 
@@ -292,4 +299,98 @@ endif()
 if(BUILD_TESTS AND BUILD_PYTHON_BINDINGS)
   # Find libraries needed by python tests
   find_python_library(pytest)
+endif()
+
+################################################################################
+# Installation / packaging (FlowSIMPro Evac Add-On)
+################################################################################
+# FlowSIMPro locates the solver by probing fixed paths, see
+# FlowSIMProVulkan/utils/JuPedSimHelper.h::defaultCandidates():
+#     Windows: C:/Program Files/FlowSIMProEvacAddOn/bin/jupedsim.exe
+#     Linux:   /opt/FlowSIMProEvacAddOn/bin/jupedsim
+# The package layout below puts the binary exactly there, so FlowSIMPro finds it
+# without the user having to set Settings > Directories > JuPedSim.
+if(BUILD_INSTALLER)
+    install(TARGETS jupedsim-cli
+        RUNTIME DESTINATION bin
+    )
+    install(DIRECTORY ${CMAKE_SOURCE_DIR}/examples/xml/
+        DESTINATION share/jupedsim/examples
+        FILES_MATCHING
+            PATTERN "*.xml"
+            PATTERN "*.md"
+    )
+    install(FILES
+            ${CMAKE_SOURCE_DIR}/LICENSE
+            ${CMAKE_SOURCE_DIR}/README.md
+        DESTINATION share/jupedsim
+    )
+
+    # Year-based release number of the add-on, independent of the upstream
+    # JuPedSim version in project(JuPedSim VERSION ...).
+    set(FLOWSIMPRO_ADDON_VERSION "2026" CACHE STRING
+        "Version stamped into the add-on installer")
+
+    set(CPACK_PACKAGE_NAME "flowsimpro-evac-addon")
+    set(CPACK_PACKAGE_VERSION "${FLOWSIMPRO_ADDON_VERSION}")
+    # Without these CPack falls back to the project() version (2.0.0) for the
+    # component variables, so generators that read them would disagree with
+    # CPACK_PACKAGE_VERSION.
+    set(CPACK_PACKAGE_VERSION_MAJOR "${FLOWSIMPRO_ADDON_VERSION}")
+    set(CPACK_PACKAGE_VERSION_MINOR "0")
+    set(CPACK_PACKAGE_VERSION_PATCH "0")
+    set(CPACK_PACKAGE_VENDOR "FlowSIM Pro")
+    set(CPACK_PACKAGE_DESCRIPTION_SUMMARY
+        "FlowSIM Pro Evac Add-On - JuPedSim evacuation solver")
+    set(CPACK_PACKAGE_INSTALL_DIRECTORY "FlowSIMProEvacAddOn")
+    set(CPACK_RESOURCE_FILE_LICENSE "${CMAKE_SOURCE_DIR}/LICENSE")
+    set(CPACK_PACKAGE_CHECKSUM SHA256)
+    set(CPACK_STRIP_FILES ON)
+
+    if(WIN32)
+        set(CPACK_GENERATOR "ZIP")
+        find_program(MAKENSIS_EXECUTABLE makensis)
+        if(MAKENSIS_EXECUTABLE)
+            list(APPEND CPACK_GENERATOR "NSIS")
+        else()
+            message(STATUS "makensis not found - only a ZIP package will be generated")
+        endif()
+        # $PROGRAMFILES64 so INSTDIR becomes C:/Program Files/FlowSIMProEvacAddOn
+        # and not the (x86) tree.
+        set(CPACK_NSIS_INSTALL_ROOT "$PROGRAMFILES64")
+        set(CPACK_NSIS_PACKAGE_NAME "FlowSIM Pro Evac Add-On")
+        set(CPACK_NSIS_DISPLAY_NAME "FlowSIM Pro Evac Add-On")
+        set(CPACK_NSIS_ENABLE_UNINSTALL_BEFORE_INSTALL ON)
+        set(CPACK_NSIS_MODIFY_PATH OFF)
+    else()
+        set(CPACK_GENERATOR "TGZ;DEB")
+        find_program(RPMBUILD_EXECUTABLE rpmbuild)
+        if(RPMBUILD_EXECUTABLE)
+            list(APPEND CPACK_GENERATOR "RPM")
+        else()
+            message(STATUS "rpmbuild not found - no RPM package will be generated")
+        endif()
+        set(CPACK_PACKAGING_INSTALL_PREFIX "/opt/FlowSIMProEvacAddOn")
+
+        # jupedsim links against libstdc++/libm/libgcc_s/libc only; CGAL, Boost,
+        # fmt, glm and libdeflate are all linked statically. Verified with
+        # `readelf -d`, so the dependency list is written out explicitly instead
+        # of paying for a dpkg-shlibdeps run.
+        set(CPACK_DEBIAN_PACKAGE_MAINTAINER "FlowSIM Pro <info@flowsimpro.com>")
+        set(CPACK_DEBIAN_PACKAGE_SECTION "science")
+        set(CPACK_DEBIAN_FILE_NAME DEB-DEFAULT)
+        set(CPACK_DEBIAN_PACKAGE_SHLIBDEPS OFF)
+        set(CPACK_DEBIAN_PACKAGE_DEPENDS
+            "libc6 (>= 2.38), libgcc-s1 (>= 4.0), libstdc++6 (>= 14)")
+
+        set(CPACK_RPM_PACKAGE_LICENSE "LGPLv3")
+        set(CPACK_RPM_PACKAGE_GROUP "Applications/Engineering")
+        set(CPACK_RPM_FILE_NAME RPM-DEFAULT)
+        set(CPACK_RPM_PACKAGE_AUTOREQ OFF)
+        set(CPACK_RPM_PACKAGE_REQUIRES "glibc >= 2.38, libgcc, libstdc++ >= 14")
+        # /opt itself belongs to the filesystem package, not to us.
+        set(CPACK_RPM_EXCLUDE_FROM_AUTO_FILELIST_ADDITION "/opt")
+    endif()
+
+    include(CPack)
 endif()

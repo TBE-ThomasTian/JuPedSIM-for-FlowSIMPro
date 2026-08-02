@@ -5,6 +5,84 @@ This repository is a customized fork of [JuPedSim](https://github.com/Pedestrian
 For the original project documentation and upstream development, see the
 [upstream repository](https://github.com/PedestrianDynamics/jupedsim).
 
+## Building
+
+The project builds from the same sources on Linux (GCC/Clang) and Windows (MSVC).
+
+### Prerequisites
+
+- CMake >= 3.22, a C++20 compiler, and a build tool (Ninja recommended)
+- All third-party dependencies are vendored as git submodules, so **clone recursively**:
+
+```
+git submodule update --init --recursive
+```
+
+This step is mandatory. Without it CMake fails on the very first `add_subdirectory(fmt)`,
+and `BUILD_XML_CLI=ON` fails to find `libdeflate`.
+
+### Linux
+
+```
+cmake -B build -G Ninja -DCMAKE_BUILD_TYPE=Release -DBUILD_XML_CLI=ON -DBUILD_TESTS=ON
+cmake --build build -j
+./build/bin/libsimulator-tests      # unit tests
+./build/bin/jupedsim --help         # native XML CLI
+```
+
+### Windows
+
+```
+cmake -B build -DCMAKE_BUILD_TYPE=Release -DBUILD_XML_CLI=ON -DBUILD_TESTS=ON
+cmake --build build --config Release -j
+```
+
+### CMake options
+
+| Option | Default | Notes |
+| --- | --- | --- |
+| `BUILD_XML_CLI` | `OFF` | Native `jupedsim` XML CLI. Builds `libdeflate` from `third-party/`. |
+| `BUILD_TESTS` | `OFF` | GoogleTest unit tests (`libsimulator-tests`). |
+| `BUILD_PYTHON_BINDINGS` | `OFF` | `py_jupedsim` extension module. Requires a Python dev install. Not needed for the CLI. |
+| `BUILD_BENCHMARKS` | `OFF` | Google Benchmark micro benchmarks. |
+| `WERROR` | `OFF` | Warnings as errors. GCC/Clang only. |
+| `WITH_FORMAT` | `OFF` | clang-format targets. Unix only. |
+| `BUILD_WITH_ASAN` | `OFF` | Address sanitizer. Clang only (the flags are not wired up for GCC). |
+| `LIBDEFLATE_ROOT` | *(empty)* | Only needed to point at an out-of-tree libdeflate instead of the submodule. |
+
+`BUILD_TESTS=ON` together with `BUILD_PYTHON_BINDINGS=ON` additionally requires `pytest`
+to be importable, because the system tests are wired into the CMake configure step.
+
+## Building the installer
+
+`BUILD_INSTALLER=ON` adds install rules and CPack packaging for the **FlowSIM Pro Evac Add-On**.
+
+```
+cmake -B build -G Ninja -DCMAKE_BUILD_TYPE=Release \
+      -DBUILD_XML_CLI=ON -DBUILD_INSTALLER=ON
+cmake --build build -j
+cd build && cpack
+```
+
+The add-on carries a year-based release number, `FLOWSIMPRO_ADDON_VERSION`
+(default `2026`), independent of the upstream JuPedSim version.
+
+| Platform | Generators | Result |
+| --- | --- | --- |
+| Linux | `TGZ`, `DEB`, `RPM` *(if `rpmbuild` is present)* | `flowsimpro-evac-addon_2026_amd64.deb`, `flowsimpro-evac-addon-2026-1.x86_64.rpm`, `flowsimpro-evac-addon-2026-Linux.tar.gz` |
+| Windows | `ZIP`, `NSIS` *(if `makensis` is present)* | `flowsimpro-evac-addon-2026-win64.exe`, `flowsimpro-evac-addon-2026-win64.zip` |
+
+The install prefix is chosen so that FlowSIM Pro auto-detects the solver with no
+user configuration — these are exactly the paths probed by
+`JuPedSimHelper::defaultCandidates()`:
+
+- Linux: `/opt/FlowSIMProEvacAddOn/bin/jupedsim`
+- Windows: `C:\Program Files\FlowSIMProEvacAddOn\bin\jupedsim.exe`
+
+Example scenarios and format docs are installed alongside under
+`share/jupedsim/`. The Linux packages declare only `libc6`, `libgcc-s1` and
+`libstdc++6`; CGAL, Boost, fmt, glm and libdeflate are linked statically.
+
 ## FlowSIMPro-specific changes
 
 ### 1) Stair and ramp stage support (C++ core + Python API)
