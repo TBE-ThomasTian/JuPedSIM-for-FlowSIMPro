@@ -271,13 +271,21 @@ Stair::Stair(
     Point position_,
     double distance_,
     double length_,
-    double speedFactor_,
+    bool ascending_,
+    double upSpeedFactor_,
+    double downSpeedFactor_,
+    double upSpeed_,
+    double downSpeed_,
     double waitingTime_,
     double timeStep_)
     : position(position_)
     , distance(distance_)
     , length(length_)
-    , speedFactor(speedFactor_)
+    , ascending(ascending_)
+    , upSpeedFactor(upSpeedFactor_)
+    , downSpeedFactor(downSpeedFactor_)
+    , upSpeed(upSpeed_)
+    , downSpeed(downSpeed_)
     , waitingTime(waitingTime_)
     , timeStep(timeStep_)
 {
@@ -287,8 +295,11 @@ Stair::Stair(
     if(length < 0.0) {
         throw SimulationError("Stair length must be >= 0.");
     }
-    if(speedFactor <= 0.0) {
-        throw SimulationError("Stair speedFactor must be > 0.");
+    if(upSpeedFactor <= 0.0) {
+        throw SimulationError("Stair upSpeedFactor must be > 0.");
+    }
+    if(downSpeedFactor <= 0.0) {
+        throw SimulationError("Stair downSpeedFactor must be > 0.");
     }
     if(waitingTime < 0.0) {
         throw SimulationError("Stair waitingTime must be >= 0.");
@@ -314,8 +325,14 @@ bool Stair::IsCompleted(const GenericAgent& agent)
         return false;
     }
 
+    // An absolute speed wins over the factor: per DIN 18009-2 F.4.2 the stair
+    // speed is not a fixed fraction of how fast the person walks on the level.
+    const double absoluteSpeed = ascending ? upSpeed : downSpeed;
+    const double speedFactor = ascending ? upSpeedFactor : downSpeedFactor;
     const double desiredSpeed = DesiredSpeedFromAgent(agent);
-    const double effectiveSpeed = std::max(0.1, desiredSpeed * speedFactor);
+    const double effectiveSpeed = absoluteSpeed > 0.0
+                                      ? absoluteSpeed
+                                      : std::max(0.1, desiredSpeed * speedFactor);
     const double traversalTime = (length / effectiveSpeed) + waitingTime;
     if(traversalTime <= 0.0) {
         return true;

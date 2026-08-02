@@ -50,7 +50,11 @@ public:
                         d.position,
                         d.distance,
                         d.length,
-                        d.speedFactor,
+                        d.ascending,
+                        d.upSpeedFactor,
+                        d.downSpeedFactor,
+                        d.upSpeed,
+                        d.downSpeed,
                         d.waitingTime,
                         d.timeStep);
                 },

@@ -352,7 +352,15 @@ class Stair : public BaseStage
     Point position;
     double distance;
     double length;
-    double speedFactor;
+    bool ascending;
+    // Going up costs more than going down: RiMEA 4.1.1 Tab. 3 gives, for the
+    // 30-50 age group, 0.50 m/s up against 0.65 m/s down. One factor for both
+    // directions cannot express that.
+    double upSpeedFactor;
+    double downSpeedFactor;
+    /// Absolute traversal speed in m/s; 0 means the factor applies instead.
+    double upSpeed;
+    double downSpeed;
     double waitingTime;
     double timeStep;
     std::unordered_map<GenericAgent::ID, uint64_t> remainingIterations{};
@@ -362,7 +370,11 @@ public:
         Point position_,
         double distance_,
         double length_,
-        double speedFactor_,
+        bool ascending_,
+        double upSpeedFactor_,
+        double downSpeedFactor_,
+        double upSpeed_,
+        double downSpeed_,
         double waitingTime_,
         double timeStep_);
     ~Stair() override = default;

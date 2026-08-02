@@ -194,7 +194,18 @@ struct ScenarioConfig {
         Point position{};
         double distance{0.6};
         double length{5.0};
-        double speedFactor{0.6};
+        bool ascending{true};
+        // DIN 18009-2 F.4.2 is explicit that stair speed is "nicht um einen
+        // bestimmten Faktor reduziert": Tab. F.2 lists absolute speeds per age
+        // group and direction. So an absolute speed can be given, and it wins
+        // over the factor. 0 means "not set" and keeps the factor, which is the
+        // behaviour of every scenario written before this existed. The standard
+        // also allows a simplified approach - half the plane speed in both
+        // directions - which is what the factors express.
+        double upSpeedFactor{0.6};
+        double downSpeedFactor{0.6};
+        double upSpeed{0.0};
+        double downSpeed{0.0};
         double waitingTime{0.0};
     };
     struct RampConfig {
@@ -393,7 +404,14 @@ void PrintUsage(const char* program)
         "      <exit weight=\"2\"><vertex x=\"...\" y=\"...\"/>...</exit>\n"
         "    </exits>\n"
         "    <stair x=\"...\" y=\"...\" length=\"8.0\" distance=\"0.6\"\n"
-        "           speed_factor=\"0.6\" waiting_time=\"0.0\"/> <!-- optional -->\n"
+        "           ascending=\"true\" speed_factor=\"0.6\" waiting_time=\"0.0\"\n"
+        "           up_speed_factor=\"0.5\" down_speed_factor=\"0.65\"\n"
+        "           up_speed=\"0.50\" down_speed=\"0.65\"/>\n"
+        "           <!-- optional. speed_factor sets both directions; up_/down_ override\n"
+        "                it. up_speed/down_speed are absolute m/s and win over the\n"
+        "                factors: per DIN 18009-2 F.4.2 the speed on stairs is not a\n"
+        "                fixed fraction of the speed on the level (Tab. F.2, after\n"
+        "                Fruin: 30-50 years, inner stair, 0.50 up / 0.65 down). -->\n"
         "    <ramp x=\"...\" y=\"...\" length=\"10.0\" distance=\"0.6\" ascending=\"true\"\n"
         "          up_speed_factor=\"0.6\" down_speed_factor=\"1.0\" waiting_time=\"0.0\"/>\n"
         "          <!-- optional, use either <stair> or <ramp> -->\n"
@@ -1901,8 +1919,17 @@ ScenarioConfig ParseScenarioConfig(const std::string& path)
         stair.position = ParsePoint(stairNode, "scenario.stair");
         stair.distance = stairNode.get<double>("<xmlattr>.distance", stair.distance);
         stair.length = stairNode.get<double>("<xmlattr>.length", stair.length);
-        stair.speedFactor =
-            stairNode.get<double>("<xmlattr>.speed_factor", stair.speedFactor);
+        stair.ascending = stairNode.get<bool>("<xmlattr>.ascending", stair.ascending);
+        // speed_factor stays as the value for both directions, so an existing
+        // scenario keeps its meaning; up_/down_speed_factor override per direction.
+        const double bothFactors =
+            stairNode.get<double>("<xmlattr>.speed_factor", stair.upSpeedFactor);
+        stair.upSpeedFactor =
+            stairNode.get<double>("<xmlattr>.up_speed_factor", bothFactors);
+        stair.downSpeedFactor =
+            stairNode.get<double>("<xmlattr>.down_speed_factor", bothFactors);
+        stair.upSpeed = stairNode.get<double>("<xmlattr>.up_speed", stair.upSpeed);
+        stair.downSpeed = stairNode.get<double>("<xmlattr>.down_speed", stair.downSpeed);
         stair.waitingTime =
             stairNode.get<double>("<xmlattr>.waiting_time", stair.waitingTime);
 
@@ -1912,8 +1939,14 @@ ScenarioConfig ParseScenarioConfig(const std::string& path)
         if(stair.length < 0.0) {
             throw std::runtime_error("scenario.stair.length must be >= 0");
         }
-        if(stair.speedFactor <= 0.0) {
-            throw std::runtime_error("scenario.stair.speed_factor must be > 0");
+        if(stair.upSpeedFactor <= 0.0 || stair.downSpeedFactor <= 0.0) {
+            throw std::runtime_error(
+                "scenario.stair speed factors must be > 0 "
+                "(speed_factor, up_speed_factor, down_speed_factor)");
+        }
+        if(stair.upSpeed < 0.0 || stair.downSpeed < 0.0) {
+            throw std::runtime_error(
+                "scenario.stair.up_speed / down_speed must be >= 0 (0 = use the factor)");
         }
         if(stair.waitingTime < 0.0) {
             throw std::runtime_error("scenario.stair.waiting_time must be >= 0");
@@ -2615,7 +2648,11 @@ int main(int argc, char** argv)
                 .position = stair.position,
                 .distance = stair.distance,
                 .length = stair.length,
-                .speedFactor = stair.speedFactor,
+                .ascending = stair.ascending,
+                .upSpeedFactor = stair.upSpeedFactor,
+                .downSpeedFactor = stair.downSpeedFactor,
+                .upSpeed = stair.upSpeed,
+                .downSpeed = stair.downSpeed,
                 .waitingTime = stair.waitingTime,
                 .timeStep = config.dt,
             });
