@@ -36,3 +36,9 @@ examples/xml/*.jsp
 
 .idea/
 /build*
+
+# DIN standards are licensed per seat and must never be committed. The copy in
+# Rimea/ is a personal licence with a watermark; putting it in a repository -
+# public or not - would be redistribution.
+Rimea/DIN*.pdf
+Rimea/*DIN*.pdf
