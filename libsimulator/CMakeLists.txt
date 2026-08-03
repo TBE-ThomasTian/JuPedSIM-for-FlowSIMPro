@@ -222,6 +222,7 @@ if (BUILD_TESTS)
         test/TestMesh.cpp
         test/TestNeighborhoodSearch.cpp
         test/TestPoint.cpp
+        test/TestRoutingEngine.cpp
         test/TestSimulationClock.cpp
         test/TestStage.cpp
         test/TestUniqueID.cpp

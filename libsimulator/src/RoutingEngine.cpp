@@ -321,20 +321,39 @@ RoutingEngine::straightenPath(Point from, Point to, const std::vector<CDT::Face_
     // This is an over estimation but IMO preferable to repeadted allocations.
     // Ideally we replace this with something w.o. allocations
     waypoints.reserve(path.size() + 1);
-    for(size_t index_portal = 1; index_portal < portalCount; ++index_portal) {
-        const auto face_from = path[index_portal - 1];
-        const auto face_to = path[index_portal];
-        if(face_from->neighbor(0) == face_to) {
-        }
-
-        const auto portal =
-            index_portal < portalCount ? get_edge(face_from, face_to) : LineSegment(to, to);
+    // Up to and including portalCount: the last turn is the destination itself,
+    // as a portal of zero length. Without it the funnel is never closed - the
+    // loop ended one turn early, the corner the path had to round was still
+    // sitting in the funnel when it stopped, and every waypoint left in there
+    // was dropped. What came out was `to` alone, so an agent in one room was
+    // sent straight at the wall between it and the exit instead of at the
+    // opening. The `LineSegment(to, to)` below had been written for this and
+    // was unreachable, because `index_portal < portalCount` is what the loop
+    // itself already guaranteed.
+    for(size_t index_portal = 1; index_portal <= portalCount; ++index_portal) {
+        const auto portal = index_portal < portalCount
+                                ? get_edge(path[index_portal - 1], path[index_portal])
+                                : LineSegment(to, to);
 
         const auto line_segment_left = portal.p2;
         const auto line_segment_right = portal.p1;
-        const auto line_segment_direction = (line_segment_right - line_segment_left).Normalized();
-        const auto candidate_left = line_segment_left + (line_segment_direction * 0.2);
-        const auto candidate_right = line_segment_right - (line_segment_direction * 0.2);
+        const auto portal_vector = line_segment_right - line_segment_left;
+        // The closing portal has no length and therefore no direction; insetting
+        // it would divide by zero and put a NaN into the funnel, which compares
+        // false against everything and loses the path silently.
+        const auto portal_length = portal_vector.Norm();
+        const auto inset = portal_length > 1e-9
+                               ? std::min(0.2, 0.45 * portal_length)
+                               : 0.0;
+        const auto line_segment_direction =
+            portal_length > 1e-9 ? portal_vector / portal_length : Point{0.0, 0.0};
+        // Never more than the portal can take. At 0.2 m from each end a portal
+        // shorter than 0.4 m comes out inverted - the right candidate landing
+        // before the left one - and the funnel is then narrowed by a segment
+        // that points backwards. Short portals are the rule between two door
+        // jambs, which is where this bites.
+        const auto candidate_left = line_segment_left + (line_segment_direction * inset);
+        const auto candidate_right = line_segment_right - (line_segment_direction * inset);
 
         if(triarea2d(apex, portal_right, candidate_right) <= 0.0) {
             if(apex == portal_right || triarea2d(apex, portal_left, candidate_right) > 0.0) {
@@ -369,6 +388,11 @@ RoutingEngine::straightenPath(Point from, Point to, const std::vector<CDT::Face_
             }
         }
     }
-    waypoints.emplace_back(to);
+    // The closing portal is the destination, so the funnel may already have
+    // emitted it. Appending it a second time would hand a caller a zero-length
+    // last leg, and ComputeWaypoint a waypoint identical to the one before it.
+    if(waypoints.empty() || Distance(waypoints.back(), to) > 1e-9) {
+        waypoints.emplace_back(to);
+    }
     return waypoints;
 }
