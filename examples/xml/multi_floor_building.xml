@@ -1,0 +1,67 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- Three storeys, one stairway shaft, one way out on the ground floor.
+     The shape of RiMEA 4.1.1 Test 8 (Parameterstudie), whose test building is
+     three storeys with a staircase and no stair upwards on the top floor.
+     Test 11 is the choice of escape route, and is something else entirely.
+
+     Each <floor> holds what a one-storey <scenario> holds. What ties them
+     together is <connections>: a person reaching the head of a stairway is
+     inside it for length / speed seconds and then continues on the storey
+     below. The <exit> of floors 1 and 2 IS that stair head - it contains the
+     stairway's entrance, which is how the solver tells it from a way out. -->
+<scenario dt="0.01" max_iterations="30000">
+  <floors>
+    <floor id="0" flowsimpro_name="Ground floor" flowsimpro_elevation_m="0.0">
+      <geometry><walkable>
+        <vertex x="0" y="0"/><vertex x="20" y="0"/><vertex x="20" y="10"/><vertex x="0" y="10"/>
+      </walkable></geometry>
+      <!-- The way out of the building: a 2 m door in the right-hand wall. -->
+      <exit>
+        <vertex x="19.5" y="4"/><vertex x="20" y="4"/><vertex x="20" y="6"/><vertex x="19.5" y="6"/>
+      </exit>
+      <agents>
+        <agent x="2.0" y="2.0" radius="0.2" time_gap="1.0" desired_speed="1.2"/>
+        <agent x="2.0" y="8.0" radius="0.2" time_gap="1.0" desired_speed="1.3"/>
+      </agents>
+    </floor>
+
+    <floor id="1" flowsimpro_name="1st floor" flowsimpro_elevation_m="3.0">
+      <geometry><walkable>
+        <vertex x="0" y="0"/><vertex x="20" y="0"/><vertex x="20" y="10"/><vertex x="0" y="10"/>
+      </walkable></geometry>
+      <!-- Not a way out: the stairway down starts inside this rectangle. -->
+      <exit>
+        <vertex x="16" y="4"/><vertex x="19" y="4"/><vertex x="19" y="6"/><vertex x="16" y="6"/>
+      </exit>
+      <agents>
+        <agent x="2.0" y="2.0" radius="0.2" time_gap="1.0" desired_speed="1.2"/>
+        <agent x="2.0" y="8.0" radius="0.2" time_gap="1.0" desired_speed="1.1"/>
+      </agents>
+    </floor>
+
+    <floor id="2" flowsimpro_name="2nd floor" flowsimpro_elevation_m="6.0">
+      <geometry><walkable>
+        <vertex x="0" y="0"/><vertex x="20" y="0"/><vertex x="20" y="10"/><vertex x="0" y="10"/>
+      </walkable></geometry>
+      <exit>
+        <vertex x="16" y="4"/><vertex x="19" y="4"/><vertex x="19" y="6"/><vertex x="16" y="6"/>
+      </exit>
+      <agents>
+        <agent x="2.0" y="2.0" radius="0.2" time_gap="1.0" desired_speed="1.2"/>
+        <agent x="2.0" y="8.0" radius="0.2" time_gap="1.0" desired_speed="1.4"/>
+      </agents>
+    </floor>
+  </floors>
+
+  <connections>
+    <!-- length is left out on purpose, so it follows DIN 18009-2 Annex E:
+         three times the 3 m height overcome, i.e. 9 m walked per storey.
+         down_speed is Fruin's figure for 30 to 50 year olds on an inside
+         staircase (DIN 18009-2 Tab. F.2 / RiMEA 4.1.1 Tab. 3), which is a
+         horizontal speed - so the 9 m are read as horizontal run as well. -->
+    <stair from_floor="2" to_floor="1" x="17.5" y="5.0" exit_x="17.5" exit_y="5.0"
+           distance="1.5" down_speed="0.65" waiting_time="0.0"/>
+    <stair from_floor="1" to_floor="0" x="17.5" y="5.0" exit_x="18.0" exit_y="5.0"
+           distance="1.5" down_speed="0.65" waiting_time="0.0"/>
+  </connections>
+</scenario>

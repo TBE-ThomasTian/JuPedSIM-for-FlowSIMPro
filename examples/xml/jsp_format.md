@@ -32,6 +32,18 @@ Each frame payload is a deflate-compressed byte block containing:
   - `f32 ori_y`
   - `u32 floor_id` (v2 only, `0` for single-floor scenarios)
 
+`floor_id` is the storey's rank by elevation, counted from the lowest, **not**
+the `<floor id="...">` of the scenario -- the exporter allocates those from the
+storey band and may skip values. The Floor Table Block below maps one to the
+other. A person keeps their `agent_id` across a storey change, so a trajectory
+stays one continuous track; only `floor_id` changes.
+
+While somebody is inside a `<connections><stair>` that carries `end_x`/`end_y`,
+they are written to every frame, interpolated along the flight and keeping the
+`floor_id` of the storey they left. A stairway without a drawn flight has no line
+to place them on, so those people appear in no frame until they are set down on
+the next storey.
+
 Uncompressed payload size = `agent_count * record_size`.
 
 ## Frame Index Entries (48 bytes each)
@@ -51,8 +63,14 @@ Use `data_offset` + `compressed_size` to read each compressed frame payload.
 ## Optional Trailer Blocks
 
 Optional blocks follow the frame index section, each introduced by its own
-magic. Their order is not significant. A reader that meets an unknown magic
-stops parsing trailers and keeps what it has read so far.
+magic. A reader that meets an unknown magic stops parsing trailers and keeps
+what it has read so far -- there is no length field in front of the magic, so an
+unknown block cannot be skipped.
+
+Because of that, order **is** significant in practice: a writer must put a newly
+introduced block behind every block that existing readers already know, or those
+readers lose the ones that follow it. The order written is `JSPM`, `JSPF`,
+`JSPH`, `JSPL`.
 
 ### Agent Metadata Block
 
@@ -73,9 +91,17 @@ Then `metadata_agent_count` records (24 bytes each):
 
 ### Source Model Block
 
-Written when the scenario carries `flowsimpro_*` attributes on `<scenario>`. It
-states where the simulated storey sits inside the source building model, so a
-trajectory can be placed correctly without its scenario XML next to it.
+Written when the scenario carries `flowsimpro_*` attributes on `<scenario>` and
+the run covered a single storey. It states where that storey sits inside the
+source building model, so a trajectory can be placed correctly without its
+scenario XML next to it.
+
+Deliberately **not** written for a `<floors>` run. The block holds exactly one
+elevation, and FlowSIMPro takes its mere presence to mean "the scenario knows
+the height", after which it places floor *n* at that elevation plus *n* times a
+guessed storey spacing. For a building that guess would override the real storey
+heights the application already has. The Floor Table Block carries the true
+elevations instead.
 
 1. `char[4] magic` = `JSPF`
 2. `u32 version` = `1`
@@ -117,3 +143,28 @@ UTF-8 and normally relative to the JSP file so the result remains movable.
 
 If the resolved SMV file is unavailable, an importer should keep the JSP
 trajectory usable and offer the user a file picker instead of rejecting it.
+
+### Floor Table Block
+
+Written when the scenario used `<floors>`. It gives the storeys the per-agent
+`floor_id` column indexes: their real elevation, and the `<floor id="...">` they
+came from. Without it a reader knows which storey somebody is on but not how
+high it is, and the single elevation of `JSPF` cannot describe a building whose
+storeys are not evenly spaced.
+
+Written last, so a reader that does not know this magic still gets `JSPM`,
+`JSPF` and `JSPH`.
+
+1. `char[4] magic` = `JSPL`
+2. `u32 version` = `1`
+3. `u32 payload_size` = `16 + floor_count * 8`
+4. `u32 floor_count`
+5. `f32 centering_shift_x` (from `flowsimpro_centering_x`)
+6. `f32 centering_shift_y` (from `flowsimpro_centering_y`)
+7. `f32 centering_shift_z` (from `flowsimpro_centering_z`)
+
+Then `floor_count` records (8 bytes each), in `floor_id` order -- record *n*
+describes the storey whose `floor_id` column value is *n*:
+
+- `u32 scenario_floor_id` (the `<floor id="...">` of the scenario)
+- `f32 elevation_m` (from `flowsimpro_elevation_m`)
