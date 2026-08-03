@@ -40,5 +40,9 @@ examples/xml/*.jsp
 # DIN standards are licensed per seat and must never be committed. The copy in
 # Rimea/ is a personal licence with a watermark; putting it in a repository -
 # public or not - would be redistribution.
-Rimea/DIN*.pdf
-Rimea/*DIN*.pdf
+#
+# The whole folder, not just the DIN files: it is where the standards being
+# worked against are kept, and the RiMEA guideline in it is someone else's
+# publication too. A rule that names only DIN invites the next document in to be
+# committed by accident, which is what nearly happened.
+Rimea/

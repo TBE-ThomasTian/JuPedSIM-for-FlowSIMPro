@@ -1,0 +1,37 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- RiMEA 4.1.1 Test 5, "Reaktionsdauer".
+     Ten persons in an 8 x 5 m room with a 1 m exit in the middle of the 5 m
+     wall, with premovement times spread evenly over 10 to 100 s.
+
+     "verifiziere, dass jede Person zu einer passenden Zeit startet" - so the
+     criterion is per person, not a total: nobody may move before their own time,
+     and everybody has to move once it has come.
+
+     Checked by reading the trajectory back: for each person, the first frame in
+     which they have moved more than a centimetre must fall on their own
+     premovement time. The last person is given 100 s, so the run cannot end
+     before that either.
+
+     The times are written out one by one rather than drawn from a distribution,
+     because the test prescribes them and a drawn set could not be checked
+     against a known answer. -->
+<scenario dt="0.01" max_iterations="20000">
+  <geometry><walkable>
+    <vertex x="0" y="0"/><vertex x="8" y="0"/><vertex x="8" y="5"/><vertex x="0" y="5"/>
+  </walkable></geometry>
+  <exit>
+    <vertex x="7.5" y="2"/><vertex x="8" y="2"/><vertex x="8" y="3"/><vertex x="7.5" y="3"/>
+  </exit>
+  <agents>
+    <agent x="0.6" y="1.2" radius="0.2" time_gap="1.0" desired_speed="1.33" pre_movement="10"/>
+    <agent x="1.8" y="1.2" radius="0.2" time_gap="1.0" desired_speed="1.33" pre_movement="20"/>
+    <agent x="3.0" y="1.2" radius="0.2" time_gap="1.0" desired_speed="1.33" pre_movement="30"/>
+    <agent x="4.2" y="1.2" radius="0.2" time_gap="1.0" desired_speed="1.33" pre_movement="40"/>
+    <agent x="5.4" y="1.2" radius="0.2" time_gap="1.0" desired_speed="1.33" pre_movement="50"/>
+    <agent x="0.6" y="2.8" radius="0.2" time_gap="1.0" desired_speed="1.33" pre_movement="60"/>
+    <agent x="1.8" y="2.8" radius="0.2" time_gap="1.0" desired_speed="1.33" pre_movement="70"/>
+    <agent x="3.0" y="2.8" radius="0.2" time_gap="1.0" desired_speed="1.33" pre_movement="80"/>
+    <agent x="4.2" y="2.8" radius="0.2" time_gap="1.0" desired_speed="1.33" pre_movement="90"/>
+    <agent x="5.4" y="2.8" radius="0.2" time_gap="1.0" desired_speed="1.33" pre_movement="100"/>
+  </agents>
+</scenario>

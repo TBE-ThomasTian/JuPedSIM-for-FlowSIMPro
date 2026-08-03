@@ -1,0 +1,56 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- RiMEA 4.1.1 Test 3, "Beibehalten der vorgegebenen Gehgeschwindigkeit treppab",
+     carried over to a stairway between two storeys.
+
+     The test asks for proof that a person on a 2 m wide and 10 m long staircase -
+     measured along the slope - covers that distance in the corresponding time at
+     a defined walking speed. Here that is 10.00 m at 0.65 m/s, so the descent has
+     to take 15.39 s: 10.00 / 0.65 = 15.3846 s, rounded up to the 0.01 s time step.
+
+     The person starts standing on the stair entrance, so nothing but the descent
+     is measured, and arrives on the ground floor inside its exit, so nothing is
+     added afterwards either.
+
+     The run ends at 15.40 s: 1539 steps of descent, plus the one step in which
+     the person is set down on the ground floor and steps out. Any change to how
+     <connections><stair> computes its time shows up here at once. RiMEA allows
+     about 5 % for its Tests 1 to 3; this is 0.1 % off the arithmetic.
+
+     0.65 m/s is Fruin's mean for 30 to 50 year olds descending an inside
+     staircase (DIN 18009-2 Tab. F.2 / RiMEA 4.1.1 Tab. 3). Those are horizontal
+     speeds, so a project that takes its speed from either table has to give the
+     horizontal run rather than the slope - see the note in the CLI usage text.
+     For this test the two are the same number by construction.
+
+     Test 2 is the same case upwards: swap from_floor and to_floor and give
+     up_speed instead of down_speed. -->
+<scenario dt="0.01" max_iterations="10000">
+  <floors>
+    <floor id="0" flowsimpro_name="Ground floor" flowsimpro_elevation_m="0.0">
+      <geometry><walkable>
+        <vertex x="0" y="0"/><vertex x="12" y="0"/><vertex x="12" y="6"/><vertex x="0" y="6"/>
+      </walkable></geometry>
+      <!-- The person lands at (2, 3), inside this opening, and is out at once. -->
+      <exit>
+        <vertex x="1" y="2"/><vertex x="3" y="2"/><vertex x="3" y="4"/><vertex x="1" y="4"/>
+      </exit>
+      <agents/>
+    </floor>
+
+    <floor id="1" flowsimpro_name="1st floor" flowsimpro_elevation_m="3.0">
+      <geometry><walkable>
+        <vertex x="0" y="0"/><vertex x="12" y="0"/><vertex x="12" y="6"/><vertex x="0" y="6"/>
+      </walkable></geometry>
+      <agents>
+        <!-- Standing on the stair entrance, so the clock measures the descent
+             and nothing else. -->
+        <agent x="2.0" y="3.0" radius="0.2" time_gap="1.0" desired_speed="1.2"/>
+      </agents>
+    </floor>
+  </floors>
+
+  <connections>
+    <stair from_floor="1" to_floor="0" x="2.0" y="3.0" exit_x="2.0" exit_y="3.0"
+           width="2.0" length="10.0" down_speed="0.65" waiting_time="0.0"/>
+  </connections>
+</scenario>

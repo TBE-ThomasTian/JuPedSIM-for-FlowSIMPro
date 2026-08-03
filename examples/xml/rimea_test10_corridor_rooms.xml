@@ -1,0 +1,97 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- RiMEA 4.1.1 Test 10, "Zuweisung von Rettungswegen".
+     A corridor with twelve adjoining rooms, six above and six below, holding 23
+     persons: one in room 3, two in every other room.
+
+     Rooms 1, 2, 3, 4, 7, 8, 9 and 10 are assigned to the main exit, rooms 5, 6,
+     11 and 12 to the secondary one. The criterion is that every person leaves
+     through the exit it was given - not the nearer one, not the emptier one.
+
+     Checked from the run's own report: exit 1 has to end with left=15 and exit 2
+     with left=8. Those follow from the room occupancies:
+       main       rooms 1,2,3,4 = 2+2+1+2 = 7   plus rooms 7,8,9,10 = 8   -> 15
+       secondary  rooms 5,6     = 4           plus rooms 11,12      = 4   ->  8
+     Any other split means an assignment was not honoured.
+
+     escape_route is 1-based over the exits in the order <exits> lists them, so
+     exit 1 is the main one. Assigned persons are put on a journey holding only
+     their own exit, which is what keeps the adaptive choice at the decision
+     point from pulling them off it again.
+
+     RiMEA dimensions neither the rooms nor the corridor of Abb. 9, only the
+     0.9 m room doors and the 1.2 m main exit. Rooms are taken as 3 m wide and
+     5 m deep here, and the corridor as 1 m, which is what the figure shows in
+     proportion. The test turns on the assignment, not on the walls. -->
+<scenario dt="0.01" max_iterations="30000">
+  <geometry>
+    <walkable>
+      <vertex x="0" y="0"/><vertex x="18" y="0"/><vertex x="18" y="11"/><vertex x="0" y="11"/>
+    </walkable>
+
+    <!-- Party walls between neighbouring rooms, below and above the corridor. -->
+    <obstacle><vertex x="2.9" y="0"/><vertex x="3.1" y="0"/><vertex x="3.1" y="5"/><vertex x="2.9" y="5"/></obstacle>
+    <obstacle><vertex x="5.9" y="0"/><vertex x="6.1" y="0"/><vertex x="6.1" y="5"/><vertex x="5.9" y="5"/></obstacle>
+    <obstacle><vertex x="8.9" y="0"/><vertex x="9.1" y="0"/><vertex x="9.1" y="5"/><vertex x="8.9" y="5"/></obstacle>
+    <obstacle><vertex x="11.9" y="0"/><vertex x="12.1" y="0"/><vertex x="12.1" y="5"/><vertex x="11.9" y="5"/></obstacle>
+    <obstacle><vertex x="14.9" y="0"/><vertex x="15.1" y="0"/><vertex x="15.1" y="5"/><vertex x="14.9" y="5"/></obstacle>
+    <obstacle><vertex x="2.9" y="6"/><vertex x="3.1" y="6"/><vertex x="3.1" y="11"/><vertex x="2.9" y="11"/></obstacle>
+    <obstacle><vertex x="5.9" y="6"/><vertex x="6.1" y="6"/><vertex x="6.1" y="11"/><vertex x="5.9" y="11"/></obstacle>
+    <obstacle><vertex x="8.9" y="6"/><vertex x="9.1" y="6"/><vertex x="9.1" y="11"/><vertex x="8.9" y="11"/></obstacle>
+    <obstacle><vertex x="11.9" y="6"/><vertex x="12.1" y="6"/><vertex x="12.1" y="11"/><vertex x="11.9" y="11"/></obstacle>
+    <obstacle><vertex x="14.9" y="6"/><vertex x="15.1" y="6"/><vertex x="15.1" y="11"/><vertex x="14.9" y="11"/></obstacle>
+
+    <!-- Corridor walls, one 0.9 m door per room, centred on the room. -->
+    <obstacle><vertex x="0"    y="4.8"/><vertex x="1.05" y="4.8"/><vertex x="1.05" y="5"/><vertex x="0"    y="5"/></obstacle>
+    <obstacle><vertex x="1.95" y="4.8"/><vertex x="4.05" y="4.8"/><vertex x="4.05" y="5"/><vertex x="1.95" y="5"/></obstacle>
+    <obstacle><vertex x="4.95" y="4.8"/><vertex x="7.05" y="4.8"/><vertex x="7.05" y="5"/><vertex x="4.95" y="5"/></obstacle>
+    <obstacle><vertex x="7.95" y="4.8"/><vertex x="10.05" y="4.8"/><vertex x="10.05" y="5"/><vertex x="7.95" y="5"/></obstacle>
+    <obstacle><vertex x="10.95" y="4.8"/><vertex x="13.05" y="4.8"/><vertex x="13.05" y="5"/><vertex x="10.95" y="5"/></obstacle>
+    <obstacle><vertex x="13.95" y="4.8"/><vertex x="16.05" y="4.8"/><vertex x="16.05" y="5"/><vertex x="13.95" y="5"/></obstacle>
+    <obstacle><vertex x="16.95" y="4.8"/><vertex x="18"   y="4.8"/><vertex x="18"   y="5"/><vertex x="16.95" y="5"/></obstacle>
+
+    <obstacle><vertex x="0"    y="6"/><vertex x="1.05" y="6"/><vertex x="1.05" y="6.2"/><vertex x="0"    y="6.2"/></obstacle>
+    <obstacle><vertex x="1.95" y="6"/><vertex x="4.05" y="6"/><vertex x="4.05" y="6.2"/><vertex x="1.95" y="6.2"/></obstacle>
+    <obstacle><vertex x="4.95" y="6"/><vertex x="7.05" y="6"/><vertex x="7.05" y="6.2"/><vertex x="4.95" y="6.2"/></obstacle>
+    <obstacle><vertex x="7.95" y="6"/><vertex x="10.05" y="6"/><vertex x="10.05" y="6.2"/><vertex x="7.95" y="6.2"/></obstacle>
+    <obstacle><vertex x="10.95" y="6"/><vertex x="13.05" y="6"/><vertex x="13.05" y="6.2"/><vertex x="10.95" y="6.2"/></obstacle>
+    <obstacle><vertex x="13.95" y="6"/><vertex x="16.05" y="6"/><vertex x="16.05" y="6.2"/><vertex x="13.95" y="6.2"/></obstacle>
+    <obstacle><vertex x="16.95" y="6"/><vertex x="18"   y="6"/><vertex x="18"   y="6.2"/><vertex x="16.95" y="6.2"/></obstacle>
+  </geometry>
+
+  <decision x="9.0" y="5.5" distance="60.0"/>
+  <exits mode="adaptive" density_weight="0.0">
+    <!-- Exit 1: the main one, at the left end of the corridor. -->
+    <exit><vertex x="0" y="5"/><vertex x="0.6" y="5"/><vertex x="0.6" y="6"/><vertex x="0" y="6"/></exit>
+    <!-- Exit 2: the secondary one, at the right end. -->
+    <exit><vertex x="17.4" y="5"/><vertex x="18" y="5"/><vertex x="18" y="6"/><vertex x="17.4" y="6"/></exit>
+  </exits>
+
+  <agents>
+    <!-- Rooms 1 to 6 above the corridor, 7 to 12 below. escape_route 1 is the
+         main exit, 2 the secondary one. -->
+    <agent x="1.0" y="8.0" radius="0.2" time_gap="1.0" desired_speed="1.33" escape_route="1"/>
+    <agent x="2.0" y="9.0" radius="0.2" time_gap="1.0" desired_speed="1.33" escape_route="1"/>
+    <agent x="4.0" y="8.0" radius="0.2" time_gap="1.0" desired_speed="1.33" escape_route="1"/>
+    <agent x="5.0" y="9.0" radius="0.2" time_gap="1.0" desired_speed="1.33" escape_route="1"/>
+    <agent x="7.5" y="8.5" radius="0.2" time_gap="1.0" desired_speed="1.33" escape_route="1"/>
+    <agent x="10.0" y="8.0" radius="0.2" time_gap="1.0" desired_speed="1.33" escape_route="1"/>
+    <agent x="11.0" y="9.0" radius="0.2" time_gap="1.0" desired_speed="1.33" escape_route="1"/>
+    <agent x="13.0" y="8.0" radius="0.2" time_gap="1.0" desired_speed="1.33" escape_route="2"/>
+    <agent x="14.0" y="9.0" radius="0.2" time_gap="1.0" desired_speed="1.33" escape_route="2"/>
+    <agent x="16.0" y="8.0" radius="0.2" time_gap="1.0" desired_speed="1.33" escape_route="2"/>
+    <agent x="17.0" y="9.0" radius="0.2" time_gap="1.0" desired_speed="1.33" escape_route="2"/>
+
+    <agent x="1.0" y="2.0" radius="0.2" time_gap="1.0" desired_speed="1.33" escape_route="1"/>
+    <agent x="2.0" y="3.0" radius="0.2" time_gap="1.0" desired_speed="1.33" escape_route="1"/>
+    <agent x="4.0" y="2.0" radius="0.2" time_gap="1.0" desired_speed="1.33" escape_route="1"/>
+    <agent x="5.0" y="3.0" radius="0.2" time_gap="1.0" desired_speed="1.33" escape_route="1"/>
+    <agent x="7.0" y="2.0" radius="0.2" time_gap="1.0" desired_speed="1.33" escape_route="1"/>
+    <agent x="8.0" y="3.0" radius="0.2" time_gap="1.0" desired_speed="1.33" escape_route="1"/>
+    <agent x="10.0" y="2.0" radius="0.2" time_gap="1.0" desired_speed="1.33" escape_route="1"/>
+    <agent x="11.0" y="3.0" radius="0.2" time_gap="1.0" desired_speed="1.33" escape_route="1"/>
+    <agent x="13.0" y="2.0" radius="0.2" time_gap="1.0" desired_speed="1.33" escape_route="2"/>
+    <agent x="14.0" y="3.0" radius="0.2" time_gap="1.0" desired_speed="1.33" escape_route="2"/>
+    <agent x="16.0" y="2.0" radius="0.2" time_gap="1.0" desired_speed="1.33" escape_route="2"/>
+    <agent x="17.0" y="3.0" radius="0.2" time_gap="1.0" desired_speed="1.33" escape_route="2"/>
+  </agents>
+</scenario>

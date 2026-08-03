@@ -1,0 +1,49 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- RiMEA 4.1.1 Test 2, "Beibehalten der vorgegebenen Gehgeschwindigkeit treppauf".
+     The mirror of Test 3 (rimea_test3_stair_descent.xml): the same 10 m staircase,
+     walked upwards.
+
+     10.00 m at 0.50 m/s must take 20.00 s, and the run ends at 20.01 s - 2000
+     steps of ascent plus the one step in which the person is set down on the
+     storey above and steps out.
+
+     0.50 m/s is Fruin's mean for 30 to 50 year olds ASCENDING an inside
+     staircase; the 0.65 m/s of Test 3 is the same group descending
+     (DIN 18009-2 Tab. F.2 / RiMEA 4.1.1 Tab. 3). That the two differ is the
+     point of the pair: a stair is not a corridor with a factor on it, and up is
+     not down.
+
+     Going up is what the test asks for, so the exit sits on the upper storey -
+     which is also what makes the run meaningful here: the solver reads the
+     direction from flowsimpro_elevation_m, not from an attribute, so this case
+     fails if that inference is ever broken. -->
+<scenario dt="0.01" max_iterations="10000">
+  <floors>
+    <floor id="0" flowsimpro_name="Ground floor" flowsimpro_elevation_m="0.0">
+      <geometry><walkable>
+        <vertex x="0" y="0"/><vertex x="12" y="0"/><vertex x="12" y="6"/><vertex x="0" y="6"/>
+      </walkable></geometry>
+      <agents>
+        <!-- Standing on the stair entrance, so the clock measures the ascent
+             and nothing else. -->
+        <agent x="2.0" y="3.0" radius="0.2" time_gap="1.0" desired_speed="1.2"/>
+      </agents>
+    </floor>
+
+    <floor id="1" flowsimpro_name="1st floor" flowsimpro_elevation_m="3.0">
+      <geometry><walkable>
+        <vertex x="0" y="0"/><vertex x="12" y="0"/><vertex x="12" y="6"/><vertex x="0" y="6"/>
+      </walkable></geometry>
+      <!-- The person arrives at (2, 3), inside this opening, and is out at once. -->
+      <exit>
+        <vertex x="1" y="2"/><vertex x="3" y="2"/><vertex x="3" y="4"/><vertex x="1" y="4"/>
+      </exit>
+      <agents/>
+    </floor>
+  </floors>
+
+  <connections>
+    <stair from_floor="0" to_floor="1" x="2.0" y="3.0" exit_x="2.0" exit_y="3.0"
+           width="2.0" length="10.0" up_speed="0.50" waiting_time="0.0"/>
+  </connections>
+</scenario>

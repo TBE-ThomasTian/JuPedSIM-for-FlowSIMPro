@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- RiMEA 4.1.1 Test 1, "Beibehalten der vorgegebenen Gehgeschwindigkeit".
+     One person in a 2 m wide, 40 m long corridor.
+
+     The guideline states the criterion outright: at 1.33 m/s the travel time has
+     to lie between 26 and 34 s. That window is 40 / 1.33 = 30.08 s with the
+     tolerances RiMEA names - 40 cm of body dimension, 1 s of reaction and 5 % on
+     the speed.
+
+     The person starts at the very beginning and the exit is the far wall, so the
+     run measures the walk and nothing else. -->
+<scenario dt="0.01" max_iterations="20000">
+  <geometry><walkable>
+    <vertex x="0" y="0"/><vertex x="41" y="0"/><vertex x="41" y="2"/><vertex x="0" y="2"/>
+  </walkable></geometry>
+  <exit>
+    <vertex x="40.5" y="0"/><vertex x="41" y="0"/><vertex x="41" y="2"/><vertex x="40.5" y="2"/>
+  </exit>
+  <agents>
+    <agent x="0.5" y="1.0" radius="0.2" time_gap="1.0" desired_speed="1.33"/>
+  </agents>
+</scenario>

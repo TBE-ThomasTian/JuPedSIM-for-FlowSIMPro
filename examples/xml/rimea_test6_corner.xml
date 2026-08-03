@@ -1,0 +1,57 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- RiMEA 4.1.1 Test 6, "Bewegung um eine Ecke".
+     Twenty persons in an L-shaped corridor 2 m wide, walking round the corner
+     to the exit.
+
+     The criterion is not a time but a hard fact: NOBODY may pass through the
+     wall. RiMEA states it that way because a model that cuts the corner would
+     shorten every escape route in every building it is ever used on, and the
+     error would never show up as a failure - only as a result that is too good.
+
+     Checked by reading the trajectory back and testing every position of every
+     person against the wall block x[0,10] y[2,12]: not one may lie inside it.
+     scripts/check_rimea.py does that, as its Test 6 check.
+
+     The corridor is the L between the wall block and the outer boundary: 2 m
+     along the bottom, then 2 m up the right-hand side to the exit at the top. -->
+<scenario dt="0.01" max_iterations="20000">
+  <geometry>
+    <walkable>
+      <vertex x="0" y="0"/><vertex x="12" y="0"/><vertex x="12" y="12"/><vertex x="0" y="12"/>
+    </walkable>
+    <!-- The inner block that makes the L. Everything above y=2 and left of
+         x=10 is solid. -->
+    <obstacle>
+      <vertex x="0" y="2"/><vertex x="10" y="2"/><vertex x="10" y="12"/><vertex x="0" y="12"/>
+    </obstacle>
+  </geometry>
+
+  <exit>
+    <vertex x="10" y="11.5"/><vertex x="12" y="11.5"/><vertex x="12" y="12"/><vertex x="10" y="12"/>
+  </exit>
+
+  <agents>
+    <!-- Twenty persons at the far end of the lower leg, two abreast, so they
+         have to round the corner rather than walk straight at the exit. -->
+    <agent x="0.3" y="0.6" radius="0.2" time_gap="1.0" desired_speed="1.33"/>
+    <agent x="0.3" y="1.4" radius="0.2" time_gap="1.0" desired_speed="1.33"/>
+    <agent x="0.9" y="0.6" radius="0.2" time_gap="1.0" desired_speed="1.33"/>
+    <agent x="0.9" y="1.4" radius="0.2" time_gap="1.0" desired_speed="1.33"/>
+    <agent x="1.5" y="0.6" radius="0.2" time_gap="1.0" desired_speed="1.33"/>
+    <agent x="1.5" y="1.4" radius="0.2" time_gap="1.0" desired_speed="1.33"/>
+    <agent x="2.1" y="0.6" radius="0.2" time_gap="1.0" desired_speed="1.33"/>
+    <agent x="2.1" y="1.4" radius="0.2" time_gap="1.0" desired_speed="1.33"/>
+    <agent x="2.7" y="0.6" radius="0.2" time_gap="1.0" desired_speed="1.33"/>
+    <agent x="2.7" y="1.4" radius="0.2" time_gap="1.0" desired_speed="1.33"/>
+    <agent x="3.3" y="0.6" radius="0.2" time_gap="1.0" desired_speed="1.33"/>
+    <agent x="3.3" y="1.4" radius="0.2" time_gap="1.0" desired_speed="1.33"/>
+    <agent x="3.9" y="0.6" radius="0.2" time_gap="1.0" desired_speed="1.33"/>
+    <agent x="3.9" y="1.4" radius="0.2" time_gap="1.0" desired_speed="1.33"/>
+    <agent x="4.5" y="0.6" radius="0.2" time_gap="1.0" desired_speed="1.33"/>
+    <agent x="4.5" y="1.4" radius="0.2" time_gap="1.0" desired_speed="1.33"/>
+    <agent x="5.1" y="0.6" radius="0.2" time_gap="1.0" desired_speed="1.33"/>
+    <agent x="5.1" y="1.4" radius="0.2" time_gap="1.0" desired_speed="1.33"/>
+    <agent x="5.7" y="0.6" radius="0.2" time_gap="1.0" desired_speed="1.33"/>
+    <agent x="5.7" y="1.4" radius="0.2" time_gap="1.0" desired_speed="1.33"/>
+  </agents>
+</scenario>
