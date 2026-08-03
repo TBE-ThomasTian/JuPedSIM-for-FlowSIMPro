@@ -141,3 +141,89 @@ TEST(LeastTargetedTransition, EmptyStagesGiveException)
 {
     ASSERT_THROW(LeastTargetedTransition sut(std::vector<BaseStage*>{}), SimulationError);
 }
+
+namespace
+{
+/// A stage at a fixed point whose targeting count the test drives by hand, the
+/// way StageManager::MigrateAgent drives it in a real run.
+class AdaptiveMockStage : public BaseStage
+{
+public:
+    explicit AdaptiveMockStage(Point target_) : target(target_)
+    {
+        ON_CALL(*this, Target).WillByDefault([this](const GenericAgent&) { return target; });
+        ON_CALL(*this, IsCompleted).WillByDefault([]() { return false; });
+    }
+    MOCK_METHOD(bool, IsCompleted, (const GenericAgent& agent), (override));
+    MOCK_METHOD(Point, Target, (const GenericAgent& agent), (override));
+    MOCK_METHOD(StageProxy, Proxy, (Simulation * simulation_), (override));
+    void SetTargeting(size_t targeting_) { targeting = targeting_; }
+
+private:
+    Point target;
+};
+
+/// What StrategicalDecisionSystem does after a decision: the agent now counts
+/// towards the stage it was sent to, and towards no other.
+void Migrate(GenericAgent& agent, BaseStage* chosen, std::vector<AdaptiveMockStage*> all)
+{
+    agent.stageId = chosen->Id();
+    for(auto* stage : all) {
+        stage->SetTargeting(stage == chosen ? 1 : 0);
+    }
+}
+} // namespace
+
+TEST(AdaptiveTransition, DoesNotSwapBecauseOfItsOwnBody)
+{
+    // The regression: CountTargeting() counts the agent that is deciding, so the
+    // exit it picked last step cost a whole densityWeight more than the one it
+    // did not pick. With the default switch_penalty and reconsideration_
+    // threshold of 0 there was nothing to absorb that, and the choice alternated
+    // on every single step - one person alone between two equal exits walked
+    // nowhere at all for the whole run.
+    testing::NiceMock<AdaptiveMockStage> left(Point{-10.0, 0.0});
+    testing::NiceMock<AdaptiveMockStage> right(Point{10.0, 0.0});
+
+    AdaptiveTransition sut(
+        std::vector<BaseStage*>{&left, &right},
+        1.0,  // expectedTimeWeight
+        1.0,  // densityWeight
+        0.0,  // queueWeight
+        0.0,  // switchPenalty
+        1,    // decisionInterval
+        0.0); // reconsiderationThreshold
+
+    auto agent = MakeTestAgent();
+    auto* first = sut.NextStage(agent);
+    Migrate(agent, first, {&left, &right});
+
+    for(auto i = 0; i < 20; ++i) {
+        auto* again = sut.NextStage(agent);
+        ASSERT_EQ(first, again) << "swapped on step " << i;
+        Migrate(agent, again, {&left, &right});
+    }
+}
+
+TEST(AdaptiveTransition, StillAvoidsACrowdedStage)
+{
+    // The other half of the same coin: excluding the agent's own body must not
+    // turn the density term off. Somebody else's crowd still has to push it away.
+    testing::NiceMock<AdaptiveMockStage> left(Point{-10.0, 0.0});
+    testing::NiceMock<AdaptiveMockStage> right(Point{10.0, 0.0});
+
+    AdaptiveTransition sut(
+        std::vector<BaseStage*>{&left, &right}, 1.0, 1.0, 0.0, 0.0, 1, 0.0);
+
+    auto agent = MakeTestAgent();
+    auto* first = sut.NextStage(agent);
+    Migrate(agent, first, {&left, &right});
+
+    auto* other = (first == &left) ? static_cast<BaseStage*>(&right)
+                                   : static_cast<BaseStage*>(&left);
+    // Twelve people ahead of it at the exit it holds, none at the other one.
+    static_cast<AdaptiveMockStage*>(first)->SetTargeting(13);
+    static_cast<AdaptiveMockStage*>(other)->SetTargeting(0);
+
+    ASSERT_EQ(other, sut.NextStage(agent));
+}

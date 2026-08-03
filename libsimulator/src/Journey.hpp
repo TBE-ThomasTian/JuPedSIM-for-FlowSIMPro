@@ -300,7 +300,17 @@ private:
         const auto distance = (candidate->Target(agent) - agent.pos).Norm();
         const auto speed = std::max(0.1, DesiredSpeedFromAgent(agent));
         const auto expectedTime = distance / speed;
-        const auto density = static_cast<double>(candidate->CountTargeting());
+        // The crowd this agent would be joining, which is not the crowd it is
+        // already counted in. CountTargeting() includes the agent doing the
+        // deciding, so leaving it in makes the exit it chose last step cost a
+        // full densityWeight more than every alternative - and with the default
+        // switch_penalty and reconsideration_threshold of 0 there is nothing to
+        // absorb that. A single person alone in a room then swaps exits every
+        // step and walks nowhere at all: the choice is decided by their own body
+        // standing where they put it.
+        const auto targeting = candidate->CountTargeting();
+        const auto density = static_cast<double>(
+            (candidate->Id() == agent.stageId && targeting > 0) ? targeting - 1 : targeting);
         const auto queue = QueueLoad(candidate);
         const auto switchingPenalty =
             (previousChoice != nullptr && previousChoice != candidate) ? switchPenalty : 0.0;
