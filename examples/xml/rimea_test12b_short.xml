@@ -1,0 +1,63 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- RiMEA 4.1.1 Test 12b, Abb. 13: the length of a bottleneck.
+     "Modelliere zwei Geometrien [...] Sie bestehen aus zwei Raeumen, die durch
+     eine Engstelle verbunden sind, deren Laenge allerdings variiert. In Raum 1
+     wird eine RiMEA Standardpopulation (Reaktionsdauer: 0 s) aus 150 Agenten
+     verteilt, am rechten Rand von Raum 2 wird das Ziel positioniert.
+     Zeige auf, dass die Raeumungsdauer von Raum 1 fuer die Geometrie mit der
+     langen Engstelle groesser ist."
+
+     This is the short bottleneck: a 0.20 m wall with a 1 m opening. Its partner
+     is rimea_test12b_long.xml, which differs in the bottleneck and in NOTHING
+     else - both rooms are 10 m deep in both files. That matters: if room 2 were
+     shortened to make space for the longer bottleneck, the comparison would be
+     between two different buildings and would prove nothing about the length of
+     the constriction.
+
+     What is compared is the moment room 1 empties, not the end of the run. The
+     long geometry is 5 m longer overall, so the total would differ even if the
+     bottleneck had no effect at all. -->
+<scenario dt="0.05" max_iterations="12000">
+  <geometry>
+    <walkable>
+      <vertex x="0" y="0"/><vertex x="20.2" y="0"/>
+      <vertex x="20.2" y="10"/><vertex x="0" y="10"/>
+    </walkable>
+    <!-- The bottleneck: 0.20 m of wall, 1 m of opening from y 4.5 to 5.5. -->
+    <obstacle>
+      <vertex x="10.0" y="0"/><vertex x="10.2" y="0"/>
+      <vertex x="10.2" y="4.5"/><vertex x="10.0" y="4.5"/>
+    </obstacle>
+    <obstacle>
+      <vertex x="10.0" y="5.5"/><vertex x="10.2" y="5.5"/>
+      <vertex x="10.2" y="10"/><vertex x="10.0" y="10"/>
+    </obstacle>
+  </geometry>
+
+  <!-- "am rechten Rand von Raum 2 wird das Ziel positioniert" -->
+  <exit>
+    <vertex x="19.7" y="0"/><vertex x="20.2" y="0"/>
+    <vertex x="20.2" y="10"/><vertex x="19.7" y="10"/>
+  </exit>
+
+  <agents>
+    <!-- 150 in room 1, RiMEA standard population, reaction time 0 s. The seed is
+         fixed so the two geometries are populated identically: the difference
+         between them has to be the bottleneck and not the draw. -->
+    <distribution mode="in_rectangles_by_number" distance_to_agents="0.45"
+                  distance_to_polygon="0.2" seed="12">
+      <zone min_x="0.5" min_y="0.5" max_x="9.5" max_y="9.5" number_of_agents="150"/>
+      <population age_mean="50" age_sigma="20" age_min="10" age_max="85"
+                  female_share="0.5" male_speed_bonus="0.109" speed_sigma_percent="19.3">
+        <speed age="10" v="1.05"/>
+        <speed age="20" v="1.61"/>
+        <speed age="30" v="1.54"/>
+        <speed age="40" v="1.48"/>
+        <speed age="50" v="1.41"/>
+        <speed age="60" v="1.27"/>
+        <speed age="70" v="1.05"/>
+        <speed age="85" v="0.68"/>
+      </population>
+    </distribution>
+  </agents>
+</scenario>

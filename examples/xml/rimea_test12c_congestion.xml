@@ -1,0 +1,70 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- RiMEA 4.1.1 Test 12c, Abb. 14: the influence of congestion.
+     "Modelliere eine Geometrie [...] Sie besteht aus drei Raeumen, verbunden
+     durch zwei hintereinander liegende, geometrisch gleiche Engstellen. Im
+     linken Raum wird eine RiMEA Standardpopulation (Reaktionsdauer: 0 s) aus
+     150 Agenten verteilt, am rechten Rand des dritten Raums wird das Ziel
+     positioniert."
+
+     The stated goal is a measurement, not a threshold: "Bestimme den zeitlichen
+     Verlauf der Agentenzahlen in Raum 1 und 2 sowie die Fluesse durch die
+     Engstellen 1 und 2." So the check that goes with this file reports those
+     numbers and asserts only what the guideline actually claims - that everybody
+     gets through both constrictions.
+
+     The two bottlenecks are geometrically identical on purpose. Any difference
+     between the flow through the first and the second is then the crowd in front
+     of them, which is the whole point of the case. -->
+<scenario dt="0.05" max_iterations="12000">
+  <geometry>
+    <walkable>
+      <vertex x="0" y="0"/><vertex x="30.4" y="0"/>
+      <vertex x="30.4" y="10"/><vertex x="0" y="10"/>
+    </walkable>
+    <!-- Bottleneck 1 and, 10 m further on, bottleneck 2 - the same wall
+         thickness and the same 1 m opening from y 4.5 to 5.5. -->
+    <obstacle>
+      <vertex x="10.0" y="0"/><vertex x="10.2" y="0"/>
+      <vertex x="10.2" y="4.5"/><vertex x="10.0" y="4.5"/>
+    </obstacle>
+    <obstacle>
+      <vertex x="10.0" y="5.5"/><vertex x="10.2" y="5.5"/>
+      <vertex x="10.2" y="10"/><vertex x="10.0" y="10"/>
+    </obstacle>
+    <obstacle>
+      <vertex x="20.2" y="0"/><vertex x="20.4" y="0"/>
+      <vertex x="20.4" y="4.5"/><vertex x="20.2" y="4.5"/>
+    </obstacle>
+    <obstacle>
+      <vertex x="20.2" y="5.5"/><vertex x="20.4" y="5.5"/>
+      <vertex x="20.4" y="10"/><vertex x="20.2" y="10"/>
+    </obstacle>
+  </geometry>
+
+  <!-- "am rechten Rand von Raum 3 wird das Ziel positioniert" -->
+  <exit>
+    <vertex x="29.9" y="0"/><vertex x="30.4" y="0"/>
+    <vertex x="30.4" y="10"/><vertex x="29.9" y="10"/>
+  </exit>
+
+  <agents>
+    <!-- 150 in room 1, RiMEA standard population, reaction time 0 s. The seed is
+         fixed so the two geometries are populated identically: the difference
+         between them has to be the bottleneck and not the draw. -->
+    <distribution mode="in_rectangles_by_number" distance_to_agents="0.45"
+                  distance_to_polygon="0.2" seed="12">
+      <zone min_x="0.5" min_y="0.5" max_x="9.5" max_y="9.5" number_of_agents="150"/>
+      <population age_mean="50" age_sigma="20" age_min="10" age_max="85"
+                  female_share="0.5" male_speed_bonus="0.109" speed_sigma_percent="19.3">
+        <speed age="10" v="1.05"/>
+        <speed age="20" v="1.61"/>
+        <speed age="30" v="1.54"/>
+        <speed age="40" v="1.48"/>
+        <speed age="50" v="1.41"/>
+        <speed age="60" v="1.27"/>
+        <speed age="70" v="1.05"/>
+        <speed age="85" v="0.68"/>
+      </population>
+    </distribution>
+  </agents>
+</scenario>

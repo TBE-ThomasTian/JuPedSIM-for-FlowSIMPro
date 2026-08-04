@@ -1,0 +1,74 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- RiMEA 4.1.1 Test 11, Abb. 10: choice of escape route.
+     "Ein oeffentlicher Raum verfuegt ueber 2 Ausgaenge [...] Waehle eine
+     Population von erwachsenen Personen aus Abb. 3 mit sofortiger Reaktion und
+     verteile die Gehgeschwindigkeiten auf eine Population von 1.000 Personen.
+     Der Raum soll von links her mit der maximal moeglichen Dichte besetzt
+     werden. Das erwartete Ergebnis ist, dass die Personen den naeheren Ausgang 1
+     zwar bevorzugen und in diesem Bereich Stauungen auftreten, jedoch einzelne
+     Personen auch den alternativen Ausgang 2 benutzen."
+
+     So the criterion is a direction and not a ratio: exit 1 has to take the
+     larger share, and exit 2 may not be left empty. A model that sends everybody
+     to exit 1 fails it just as one that splits the crowd evenly does.
+
+     density_weight is 0 on purpose. The test describes choice by distance, and
+     with load balancing on the split comes out near even - which is a different
+     model of how people behave, not a wrong one, but it is not the one this case
+     is about. The value is stated here rather than left to a default so that
+     whoever reads the result knows which model produced it. -->
+<scenario dt="0.05" max_iterations="20000">
+  <geometry>
+    <walkable>
+      <vertex x="0" y="0"/><vertex x="30" y="0"/>
+      <vertex x="30" y="21"/><vertex x="0" y="21"/>
+    </walkable>
+    <!-- The top wall, with a 1 m throat at x 21..22 (exit 1, the nearer one)
+         and another at x 27..28 (exit 2). -->
+    <obstacle>
+      <vertex x="0" y="20"/><vertex x="21" y="20"/>
+      <vertex x="21" y="21"/><vertex x="0" y="21"/>
+    </obstacle>
+    <obstacle>
+      <vertex x="22" y="20"/><vertex x="27" y="20"/>
+      <vertex x="27" y="21"/><vertex x="22" y="21"/>
+    </obstacle>
+    <obstacle>
+      <vertex x="28" y="20"/><vertex x="30" y="20"/>
+      <vertex x="30" y="21"/><vertex x="28" y="21"/>
+    </obstacle>
+  </geometry>
+
+  <!-- Exit 1 first, so the summary numbers them the way the guideline does. -->
+  <decision x="8.75" y="10.0" distance="60.0"/>
+  <exits mode="adaptive" expected_time_weight="1.0" density_weight="0.0"
+         queue_weight="0.0" switch_penalty="0.0" decision_interval="1"
+         reconsideration_threshold="0.0">
+    <exit>
+      <vertex x="21" y="20"/><vertex x="22" y="20"/>
+      <vertex x="22" y="21"/><vertex x="21" y="21"/>
+    </exit>
+    <exit>
+      <vertex x="27" y="20"/><vertex x="28" y="20"/>
+      <vertex x="28" y="21"/><vertex x="27" y="21"/>
+    </exit>
+  </exits>
+
+  <agents>
+    <!-- "von links her mit der maximal moeglichen Dichte": the thousand stand in
+         the left half. 16 x 19 m for a thousand people is 3.3 P/m2 - as tight as
+         the placement will pack them; a narrower strip is refused outright. -->
+    <distribution mode="in_rectangles_by_number" distance_to_agents="0.45"
+                  distance_to_polygon="0.2" seed="11">
+      <zone min_x="0.5" min_y="0.5" max_x="16.5" max_y="19.5" number_of_agents="1000"/>
+      <population age_mean="35" age_sigma="10" age_min="20" age_max="60"
+                  female_share="0.5" male_speed_bonus="0.109" speed_sigma_percent="19.3">
+        <speed age="20" v="1.61"/>
+        <speed age="30" v="1.54"/>
+        <speed age="40" v="1.48"/>
+        <speed age="50" v="1.41"/>
+        <speed age="60" v="1.27"/>
+      </population>
+    </distribution>
+  </agents>
+</scenario>

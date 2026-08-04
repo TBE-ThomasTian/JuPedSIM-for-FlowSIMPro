@@ -1,0 +1,980 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- RiMEA 4.1.1 Test 8, Abb. 7: the parameter study.
+     "Fuer den [...] dreistoeckigen Testgrundriss soll aufgezeigt werden, wie
+     sich die Gesamtraeumungsdauer veraendert, wenn einzelne Personenparameter
+     variiert werden. [...] Der untersuchte Parameter soll dabei jeweils einmal
+     fuer alle Personen gleich sein (z.B. Geschwindigkeit aller Personen:
+     0,5 m/s, 0,75 m/s, 1,0 m/s, ...)"
+
+     The guideline asks for a series of runs and for graphs, not for a threshold,
+     so there is no number here to pass or fail against. What the check does with
+     this file is run it at several walking speeds and assert the one thing the
+     study would be meaningless without: a slower population may not evacuate the
+     building faster. It edits desired_speed, which is why every agent carries it
+     literally rather than drawing from a population.
+
+     Eleven rooms across, four bands of them, four persons per room, on each of
+     three storeys - 528 people. The 2nd floor has no stair upwards, which is
+     what distinguishes it from the 1st. -->
+<scenario dt="0.05" max_iterations="20000">
+  <floors>
+    <floor id="0" flowsimpro_name="Ground floor" flowsimpro_elevation_m="0">
+      <geometry>
+      <walkable><vertex x="0" y="0"/><vertex x="26" y="0"/><vertex x="26" y="16"/><vertex x="0" y="16"/></walkable>
+      <obstacle><vertex x="0" y="2.8"/><vertex x="0.5" y="2.8"/><vertex x="0.5" y="3"/><vertex x="0" y="3"/></obstacle>
+      <obstacle><vertex x="1.5" y="2.8"/><vertex x="2" y="2.8"/><vertex x="2" y="3"/><vertex x="1.5" y="3"/></obstacle>
+      <obstacle><vertex x="2" y="2.8"/><vertex x="2.5" y="2.8"/><vertex x="2.5" y="3"/><vertex x="2" y="3"/></obstacle>
+      <obstacle><vertex x="3.5" y="2.8"/><vertex x="4" y="2.8"/><vertex x="4" y="3"/><vertex x="3.5" y="3"/></obstacle>
+      <obstacle><vertex x="1.9" y="0"/><vertex x="2.1" y="0"/><vertex x="2.1" y="3"/><vertex x="1.9" y="3"/></obstacle>
+      <obstacle><vertex x="4" y="2.8"/><vertex x="4.5" y="2.8"/><vertex x="4.5" y="3"/><vertex x="4" y="3"/></obstacle>
+      <obstacle><vertex x="5.5" y="2.8"/><vertex x="6" y="2.8"/><vertex x="6" y="3"/><vertex x="5.5" y="3"/></obstacle>
+      <obstacle><vertex x="3.9" y="0"/><vertex x="4.1" y="0"/><vertex x="4.1" y="3"/><vertex x="3.9" y="3"/></obstacle>
+      <obstacle><vertex x="6" y="2.8"/><vertex x="6.5" y="2.8"/><vertex x="6.5" y="3"/><vertex x="6" y="3"/></obstacle>
+      <obstacle><vertex x="7.5" y="2.8"/><vertex x="8" y="2.8"/><vertex x="8" y="3"/><vertex x="7.5" y="3"/></obstacle>
+      <obstacle><vertex x="5.9" y="0"/><vertex x="6.1" y="0"/><vertex x="6.1" y="3"/><vertex x="5.9" y="3"/></obstacle>
+      <obstacle><vertex x="8" y="2.8"/><vertex x="8.5" y="2.8"/><vertex x="8.5" y="3"/><vertex x="8" y="3"/></obstacle>
+      <obstacle><vertex x="9.5" y="2.8"/><vertex x="10" y="2.8"/><vertex x="10" y="3"/><vertex x="9.5" y="3"/></obstacle>
+      <obstacle><vertex x="7.9" y="0"/><vertex x="8.1" y="0"/><vertex x="8.1" y="3"/><vertex x="7.9" y="3"/></obstacle>
+      <obstacle><vertex x="10" y="2.8"/><vertex x="10.5" y="2.8"/><vertex x="10.5" y="3"/><vertex x="10" y="3"/></obstacle>
+      <obstacle><vertex x="11.5" y="2.8"/><vertex x="12" y="2.8"/><vertex x="12" y="3"/><vertex x="11.5" y="3"/></obstacle>
+      <obstacle><vertex x="9.9" y="0"/><vertex x="10.1" y="0"/><vertex x="10.1" y="3"/><vertex x="9.9" y="3"/></obstacle>
+      <obstacle><vertex x="12" y="2.8"/><vertex x="12.5" y="2.8"/><vertex x="12.5" y="3"/><vertex x="12" y="3"/></obstacle>
+      <obstacle><vertex x="13.5" y="2.8"/><vertex x="14" y="2.8"/><vertex x="14" y="3"/><vertex x="13.5" y="3"/></obstacle>
+      <obstacle><vertex x="11.9" y="0"/><vertex x="12.1" y="0"/><vertex x="12.1" y="3"/><vertex x="11.9" y="3"/></obstacle>
+      <obstacle><vertex x="14" y="2.8"/><vertex x="14.5" y="2.8"/><vertex x="14.5" y="3"/><vertex x="14" y="3"/></obstacle>
+      <obstacle><vertex x="15.5" y="2.8"/><vertex x="16" y="2.8"/><vertex x="16" y="3"/><vertex x="15.5" y="3"/></obstacle>
+      <obstacle><vertex x="13.9" y="0"/><vertex x="14.1" y="0"/><vertex x="14.1" y="3"/><vertex x="13.9" y="3"/></obstacle>
+      <obstacle><vertex x="16" y="2.8"/><vertex x="16.5" y="2.8"/><vertex x="16.5" y="3"/><vertex x="16" y="3"/></obstacle>
+      <obstacle><vertex x="17.5" y="2.8"/><vertex x="18" y="2.8"/><vertex x="18" y="3"/><vertex x="17.5" y="3"/></obstacle>
+      <obstacle><vertex x="15.9" y="0"/><vertex x="16.1" y="0"/><vertex x="16.1" y="3"/><vertex x="15.9" y="3"/></obstacle>
+      <obstacle><vertex x="18" y="2.8"/><vertex x="18.5" y="2.8"/><vertex x="18.5" y="3"/><vertex x="18" y="3"/></obstacle>
+      <obstacle><vertex x="19.5" y="2.8"/><vertex x="20" y="2.8"/><vertex x="20" y="3"/><vertex x="19.5" y="3"/></obstacle>
+      <obstacle><vertex x="17.9" y="0"/><vertex x="18.1" y="0"/><vertex x="18.1" y="3"/><vertex x="17.9" y="3"/></obstacle>
+      <obstacle><vertex x="20" y="2.8"/><vertex x="20.5" y="2.8"/><vertex x="20.5" y="3"/><vertex x="20" y="3"/></obstacle>
+      <obstacle><vertex x="21.5" y="2.8"/><vertex x="22" y="2.8"/><vertex x="22" y="3"/><vertex x="21.5" y="3"/></obstacle>
+      <obstacle><vertex x="19.9" y="0"/><vertex x="20.1" y="0"/><vertex x="20.1" y="3"/><vertex x="19.9" y="3"/></obstacle>
+      <obstacle><vertex x="0" y="5"/><vertex x="0.5" y="5"/><vertex x="0.5" y="5.2"/><vertex x="0" y="5.2"/></obstacle>
+      <obstacle><vertex x="1.5" y="5"/><vertex x="2" y="5"/><vertex x="2" y="5.2"/><vertex x="1.5" y="5.2"/></obstacle>
+      <obstacle><vertex x="2" y="5"/><vertex x="2.5" y="5"/><vertex x="2.5" y="5.2"/><vertex x="2" y="5.2"/></obstacle>
+      <obstacle><vertex x="3.5" y="5"/><vertex x="4" y="5"/><vertex x="4" y="5.2"/><vertex x="3.5" y="5.2"/></obstacle>
+      <obstacle><vertex x="1.9" y="5"/><vertex x="2.1" y="5"/><vertex x="2.1" y="8"/><vertex x="1.9" y="8"/></obstacle>
+      <obstacle><vertex x="4" y="5"/><vertex x="4.5" y="5"/><vertex x="4.5" y="5.2"/><vertex x="4" y="5.2"/></obstacle>
+      <obstacle><vertex x="5.5" y="5"/><vertex x="6" y="5"/><vertex x="6" y="5.2"/><vertex x="5.5" y="5.2"/></obstacle>
+      <obstacle><vertex x="3.9" y="5"/><vertex x="4.1" y="5"/><vertex x="4.1" y="8"/><vertex x="3.9" y="8"/></obstacle>
+      <obstacle><vertex x="6" y="5"/><vertex x="6.5" y="5"/><vertex x="6.5" y="5.2"/><vertex x="6" y="5.2"/></obstacle>
+      <obstacle><vertex x="7.5" y="5"/><vertex x="8" y="5"/><vertex x="8" y="5.2"/><vertex x="7.5" y="5.2"/></obstacle>
+      <obstacle><vertex x="5.9" y="5"/><vertex x="6.1" y="5"/><vertex x="6.1" y="8"/><vertex x="5.9" y="8"/></obstacle>
+      <obstacle><vertex x="8" y="5"/><vertex x="8.5" y="5"/><vertex x="8.5" y="5.2"/><vertex x="8" y="5.2"/></obstacle>
+      <obstacle><vertex x="9.5" y="5"/><vertex x="10" y="5"/><vertex x="10" y="5.2"/><vertex x="9.5" y="5.2"/></obstacle>
+      <obstacle><vertex x="7.9" y="5"/><vertex x="8.1" y="5"/><vertex x="8.1" y="8"/><vertex x="7.9" y="8"/></obstacle>
+      <obstacle><vertex x="10" y="5"/><vertex x="10.5" y="5"/><vertex x="10.5" y="5.2"/><vertex x="10" y="5.2"/></obstacle>
+      <obstacle><vertex x="11.5" y="5"/><vertex x="12" y="5"/><vertex x="12" y="5.2"/><vertex x="11.5" y="5.2"/></obstacle>
+      <obstacle><vertex x="9.9" y="5"/><vertex x="10.1" y="5"/><vertex x="10.1" y="8"/><vertex x="9.9" y="8"/></obstacle>
+      <obstacle><vertex x="12" y="5"/><vertex x="12.5" y="5"/><vertex x="12.5" y="5.2"/><vertex x="12" y="5.2"/></obstacle>
+      <obstacle><vertex x="13.5" y="5"/><vertex x="14" y="5"/><vertex x="14" y="5.2"/><vertex x="13.5" y="5.2"/></obstacle>
+      <obstacle><vertex x="11.9" y="5"/><vertex x="12.1" y="5"/><vertex x="12.1" y="8"/><vertex x="11.9" y="8"/></obstacle>
+      <obstacle><vertex x="14" y="5"/><vertex x="14.5" y="5"/><vertex x="14.5" y="5.2"/><vertex x="14" y="5.2"/></obstacle>
+      <obstacle><vertex x="15.5" y="5"/><vertex x="16" y="5"/><vertex x="16" y="5.2"/><vertex x="15.5" y="5.2"/></obstacle>
+      <obstacle><vertex x="13.9" y="5"/><vertex x="14.1" y="5"/><vertex x="14.1" y="8"/><vertex x="13.9" y="8"/></obstacle>
+      <obstacle><vertex x="16" y="5"/><vertex x="16.5" y="5"/><vertex x="16.5" y="5.2"/><vertex x="16" y="5.2"/></obstacle>
+      <obstacle><vertex x="17.5" y="5"/><vertex x="18" y="5"/><vertex x="18" y="5.2"/><vertex x="17.5" y="5.2"/></obstacle>
+      <obstacle><vertex x="15.9" y="5"/><vertex x="16.1" y="5"/><vertex x="16.1" y="8"/><vertex x="15.9" y="8"/></obstacle>
+      <obstacle><vertex x="18" y="5"/><vertex x="18.5" y="5"/><vertex x="18.5" y="5.2"/><vertex x="18" y="5.2"/></obstacle>
+      <obstacle><vertex x="19.5" y="5"/><vertex x="20" y="5"/><vertex x="20" y="5.2"/><vertex x="19.5" y="5.2"/></obstacle>
+      <obstacle><vertex x="17.9" y="5"/><vertex x="18.1" y="5"/><vertex x="18.1" y="8"/><vertex x="17.9" y="8"/></obstacle>
+      <obstacle><vertex x="20" y="5"/><vertex x="20.5" y="5"/><vertex x="20.5" y="5.2"/><vertex x="20" y="5.2"/></obstacle>
+      <obstacle><vertex x="21.5" y="5"/><vertex x="22" y="5"/><vertex x="22" y="5.2"/><vertex x="21.5" y="5.2"/></obstacle>
+      <obstacle><vertex x="19.9" y="5"/><vertex x="20.1" y="5"/><vertex x="20.1" y="8"/><vertex x="19.9" y="8"/></obstacle>
+      <obstacle><vertex x="0" y="10.8"/><vertex x="0.5" y="10.8"/><vertex x="0.5" y="11"/><vertex x="0" y="11"/></obstacle>
+      <obstacle><vertex x="1.5" y="10.8"/><vertex x="2" y="10.8"/><vertex x="2" y="11"/><vertex x="1.5" y="11"/></obstacle>
+      <obstacle><vertex x="2" y="10.8"/><vertex x="2.5" y="10.8"/><vertex x="2.5" y="11"/><vertex x="2" y="11"/></obstacle>
+      <obstacle><vertex x="3.5" y="10.8"/><vertex x="4" y="10.8"/><vertex x="4" y="11"/><vertex x="3.5" y="11"/></obstacle>
+      <obstacle><vertex x="1.9" y="8"/><vertex x="2.1" y="8"/><vertex x="2.1" y="11"/><vertex x="1.9" y="11"/></obstacle>
+      <obstacle><vertex x="4" y="10.8"/><vertex x="4.5" y="10.8"/><vertex x="4.5" y="11"/><vertex x="4" y="11"/></obstacle>
+      <obstacle><vertex x="5.5" y="10.8"/><vertex x="6" y="10.8"/><vertex x="6" y="11"/><vertex x="5.5" y="11"/></obstacle>
+      <obstacle><vertex x="3.9" y="8"/><vertex x="4.1" y="8"/><vertex x="4.1" y="11"/><vertex x="3.9" y="11"/></obstacle>
+      <obstacle><vertex x="6" y="10.8"/><vertex x="6.5" y="10.8"/><vertex x="6.5" y="11"/><vertex x="6" y="11"/></obstacle>
+      <obstacle><vertex x="7.5" y="10.8"/><vertex x="8" y="10.8"/><vertex x="8" y="11"/><vertex x="7.5" y="11"/></obstacle>
+      <obstacle><vertex x="5.9" y="8"/><vertex x="6.1" y="8"/><vertex x="6.1" y="11"/><vertex x="5.9" y="11"/></obstacle>
+      <obstacle><vertex x="8" y="10.8"/><vertex x="8.5" y="10.8"/><vertex x="8.5" y="11"/><vertex x="8" y="11"/></obstacle>
+      <obstacle><vertex x="9.5" y="10.8"/><vertex x="10" y="10.8"/><vertex x="10" y="11"/><vertex x="9.5" y="11"/></obstacle>
+      <obstacle><vertex x="7.9" y="8"/><vertex x="8.1" y="8"/><vertex x="8.1" y="11"/><vertex x="7.9" y="11"/></obstacle>
+      <obstacle><vertex x="10" y="10.8"/><vertex x="10.5" y="10.8"/><vertex x="10.5" y="11"/><vertex x="10" y="11"/></obstacle>
+      <obstacle><vertex x="11.5" y="10.8"/><vertex x="12" y="10.8"/><vertex x="12" y="11"/><vertex x="11.5" y="11"/></obstacle>
+      <obstacle><vertex x="9.9" y="8"/><vertex x="10.1" y="8"/><vertex x="10.1" y="11"/><vertex x="9.9" y="11"/></obstacle>
+      <obstacle><vertex x="12" y="10.8"/><vertex x="12.5" y="10.8"/><vertex x="12.5" y="11"/><vertex x="12" y="11"/></obstacle>
+      <obstacle><vertex x="13.5" y="10.8"/><vertex x="14" y="10.8"/><vertex x="14" y="11"/><vertex x="13.5" y="11"/></obstacle>
+      <obstacle><vertex x="11.9" y="8"/><vertex x="12.1" y="8"/><vertex x="12.1" y="11"/><vertex x="11.9" y="11"/></obstacle>
+      <obstacle><vertex x="14" y="10.8"/><vertex x="14.5" y="10.8"/><vertex x="14.5" y="11"/><vertex x="14" y="11"/></obstacle>
+      <obstacle><vertex x="15.5" y="10.8"/><vertex x="16" y="10.8"/><vertex x="16" y="11"/><vertex x="15.5" y="11"/></obstacle>
+      <obstacle><vertex x="13.9" y="8"/><vertex x="14.1" y="8"/><vertex x="14.1" y="11"/><vertex x="13.9" y="11"/></obstacle>
+      <obstacle><vertex x="16" y="10.8"/><vertex x="16.5" y="10.8"/><vertex x="16.5" y="11"/><vertex x="16" y="11"/></obstacle>
+      <obstacle><vertex x="17.5" y="10.8"/><vertex x="18" y="10.8"/><vertex x="18" y="11"/><vertex x="17.5" y="11"/></obstacle>
+      <obstacle><vertex x="15.9" y="8"/><vertex x="16.1" y="8"/><vertex x="16.1" y="11"/><vertex x="15.9" y="11"/></obstacle>
+      <obstacle><vertex x="18" y="10.8"/><vertex x="18.5" y="10.8"/><vertex x="18.5" y="11"/><vertex x="18" y="11"/></obstacle>
+      <obstacle><vertex x="19.5" y="10.8"/><vertex x="20" y="10.8"/><vertex x="20" y="11"/><vertex x="19.5" y="11"/></obstacle>
+      <obstacle><vertex x="17.9" y="8"/><vertex x="18.1" y="8"/><vertex x="18.1" y="11"/><vertex x="17.9" y="11"/></obstacle>
+      <obstacle><vertex x="20" y="10.8"/><vertex x="20.5" y="10.8"/><vertex x="20.5" y="11"/><vertex x="20" y="11"/></obstacle>
+      <obstacle><vertex x="21.5" y="10.8"/><vertex x="22" y="10.8"/><vertex x="22" y="11"/><vertex x="21.5" y="11"/></obstacle>
+      <obstacle><vertex x="19.9" y="8"/><vertex x="20.1" y="8"/><vertex x="20.1" y="11"/><vertex x="19.9" y="11"/></obstacle>
+      <obstacle><vertex x="0" y="13"/><vertex x="0.5" y="13"/><vertex x="0.5" y="13.2"/><vertex x="0" y="13.2"/></obstacle>
+      <obstacle><vertex x="1.5" y="13"/><vertex x="2" y="13"/><vertex x="2" y="13.2"/><vertex x="1.5" y="13.2"/></obstacle>
+      <obstacle><vertex x="2" y="13"/><vertex x="2.5" y="13"/><vertex x="2.5" y="13.2"/><vertex x="2" y="13.2"/></obstacle>
+      <obstacle><vertex x="3.5" y="13"/><vertex x="4" y="13"/><vertex x="4" y="13.2"/><vertex x="3.5" y="13.2"/></obstacle>
+      <obstacle><vertex x="1.9" y="13"/><vertex x="2.1" y="13"/><vertex x="2.1" y="16"/><vertex x="1.9" y="16"/></obstacle>
+      <obstacle><vertex x="4" y="13"/><vertex x="4.5" y="13"/><vertex x="4.5" y="13.2"/><vertex x="4" y="13.2"/></obstacle>
+      <obstacle><vertex x="5.5" y="13"/><vertex x="6" y="13"/><vertex x="6" y="13.2"/><vertex x="5.5" y="13.2"/></obstacle>
+      <obstacle><vertex x="3.9" y="13"/><vertex x="4.1" y="13"/><vertex x="4.1" y="16"/><vertex x="3.9" y="16"/></obstacle>
+      <obstacle><vertex x="6" y="13"/><vertex x="6.5" y="13"/><vertex x="6.5" y="13.2"/><vertex x="6" y="13.2"/></obstacle>
+      <obstacle><vertex x="7.5" y="13"/><vertex x="8" y="13"/><vertex x="8" y="13.2"/><vertex x="7.5" y="13.2"/></obstacle>
+      <obstacle><vertex x="5.9" y="13"/><vertex x="6.1" y="13"/><vertex x="6.1" y="16"/><vertex x="5.9" y="16"/></obstacle>
+      <obstacle><vertex x="8" y="13"/><vertex x="8.5" y="13"/><vertex x="8.5" y="13.2"/><vertex x="8" y="13.2"/></obstacle>
+      <obstacle><vertex x="9.5" y="13"/><vertex x="10" y="13"/><vertex x="10" y="13.2"/><vertex x="9.5" y="13.2"/></obstacle>
+      <obstacle><vertex x="7.9" y="13"/><vertex x="8.1" y="13"/><vertex x="8.1" y="16"/><vertex x="7.9" y="16"/></obstacle>
+      <obstacle><vertex x="10" y="13"/><vertex x="10.5" y="13"/><vertex x="10.5" y="13.2"/><vertex x="10" y="13.2"/></obstacle>
+      <obstacle><vertex x="11.5" y="13"/><vertex x="12" y="13"/><vertex x="12" y="13.2"/><vertex x="11.5" y="13.2"/></obstacle>
+      <obstacle><vertex x="9.9" y="13"/><vertex x="10.1" y="13"/><vertex x="10.1" y="16"/><vertex x="9.9" y="16"/></obstacle>
+      <obstacle><vertex x="12" y="13"/><vertex x="12.5" y="13"/><vertex x="12.5" y="13.2"/><vertex x="12" y="13.2"/></obstacle>
+      <obstacle><vertex x="13.5" y="13"/><vertex x="14" y="13"/><vertex x="14" y="13.2"/><vertex x="13.5" y="13.2"/></obstacle>
+      <obstacle><vertex x="11.9" y="13"/><vertex x="12.1" y="13"/><vertex x="12.1" y="16"/><vertex x="11.9" y="16"/></obstacle>
+      <obstacle><vertex x="14" y="13"/><vertex x="14.5" y="13"/><vertex x="14.5" y="13.2"/><vertex x="14" y="13.2"/></obstacle>
+      <obstacle><vertex x="15.5" y="13"/><vertex x="16" y="13"/><vertex x="16" y="13.2"/><vertex x="15.5" y="13.2"/></obstacle>
+      <obstacle><vertex x="13.9" y="13"/><vertex x="14.1" y="13"/><vertex x="14.1" y="16"/><vertex x="13.9" y="16"/></obstacle>
+      <obstacle><vertex x="16" y="13"/><vertex x="16.5" y="13"/><vertex x="16.5" y="13.2"/><vertex x="16" y="13.2"/></obstacle>
+      <obstacle><vertex x="17.5" y="13"/><vertex x="18" y="13"/><vertex x="18" y="13.2"/><vertex x="17.5" y="13.2"/></obstacle>
+      <obstacle><vertex x="15.9" y="13"/><vertex x="16.1" y="13"/><vertex x="16.1" y="16"/><vertex x="15.9" y="16"/></obstacle>
+      <obstacle><vertex x="18" y="13"/><vertex x="18.5" y="13"/><vertex x="18.5" y="13.2"/><vertex x="18" y="13.2"/></obstacle>
+      <obstacle><vertex x="19.5" y="13"/><vertex x="20" y="13"/><vertex x="20" y="13.2"/><vertex x="19.5" y="13.2"/></obstacle>
+      <obstacle><vertex x="17.9" y="13"/><vertex x="18.1" y="13"/><vertex x="18.1" y="16"/><vertex x="17.9" y="16"/></obstacle>
+      <obstacle><vertex x="20" y="13"/><vertex x="20.5" y="13"/><vertex x="20.5" y="13.2"/><vertex x="20" y="13.2"/></obstacle>
+      <obstacle><vertex x="21.5" y="13"/><vertex x="22" y="13"/><vertex x="22" y="13.2"/><vertex x="21.5" y="13.2"/></obstacle>
+      <obstacle><vertex x="19.9" y="13"/><vertex x="20.1" y="13"/><vertex x="20.1" y="16"/><vertex x="19.9" y="16"/></obstacle>
+      <obstacle><vertex x="22" y="0"/><vertex x="22.2" y="0"/><vertex x="22.2" y="3"/><vertex x="22" y="3"/></obstacle>
+      <obstacle><vertex x="22" y="5"/><vertex x="22.2" y="5"/><vertex x="22.2" y="11"/><vertex x="22" y="11"/></obstacle>
+      <obstacle><vertex x="22" y="13"/><vertex x="22.2" y="13"/><vertex x="22.2" y="16"/><vertex x="22" y="16"/></obstacle>
+      </geometry>
+      <!-- The way out of the building: one door leaf, top right. -->
+      <exit><vertex x="23.5" y="15.8"/><vertex x="24.5" y="15.8"/><vertex x="24.5" y="16"/><vertex x="23.5" y="16"/></exit>
+      <agents>
+        <agent x="0.450" y="0.875" radius="0.2" time_gap="1.0" desired_speed="1.00"/>
+        <agent x="0.450" y="1.925" radius="0.2" time_gap="1.0" desired_speed="1.00"/>
+        <agent x="1.550" y="0.875" radius="0.2" time_gap="1.0" desired_speed="1.00"/>
+        <agent x="1.550" y="1.925" radius="0.2" time_gap="1.0" desired_speed="1.00"/>
+        <agent x="2.450" y="0.875" radius="0.2" time_gap="1.0" desired_speed="1.00"/>
+        <agent x="2.450" y="1.925" radius="0.2" time_gap="1.0" desired_speed="1.00"/>
+        <agent x="3.550" y="0.875" radius="0.2" time_gap="1.0" desired_speed="1.00"/>
+        <agent x="3.550" y="1.925" radius="0.2" time_gap="1.0" desired_speed="1.00"/>
+        <agent x="4.450" y="0.875" radius="0.2" time_gap="1.0" desired_speed="1.00"/>
+        <agent x="4.450" y="1.925" radius="0.2" time_gap="1.0" desired_speed="1.00"/>
+        <agent x="5.550" y="0.875" radius="0.2" time_gap="1.0" desired_speed="1.00"/>
+        <agent x="5.550" y="1.925" radius="0.2" time_gap="1.0" desired_speed="1.00"/>
+        <agent x="6.450" y="0.875" radius="0.2" time_gap="1.0" desired_speed="1.00"/>
+        <agent x="6.450" y="1.925" radius="0.2" time_gap="1.0" desired_speed="1.00"/>
+        <agent x="7.550" y="0.875" radius="0.2" time_gap="1.0" desired_speed="1.00"/>
+        <agent x="7.550" y="1.925" radius="0.2" time_gap="1.0" desired_speed="1.00"/>
+        <agent x="8.450" y="0.875" radius="0.2" time_gap="1.0" desired_speed="1.00"/>
+        <agent x="8.450" y="1.925" radius="0.2" time_gap="1.0" desired_speed="1.00"/>
+        <agent x="9.550" y="0.875" radius="0.2" time_gap="1.0" desired_speed="1.00"/>
+        <agent x="9.550" y="1.925" radius="0.2" time_gap="1.0" desired_speed="1.00"/>
+        <agent x="10.450" y="0.875" radius="0.2" time_gap="1.0" desired_speed="1.00"/>
+        <agent x="10.450" y="1.925" radius="0.2" time_gap="1.0" desired_speed="1.00"/>
+        <agent x="11.550" y="0.875" radius="0.2" time_gap="1.0" desired_speed="1.00"/>
+        <agent x="11.550" y="1.925" radius="0.2" time_gap="1.0" desired_speed="1.00"/>
+        <agent x="12.450" y="0.875" radius="0.2" time_gap="1.0" desired_speed="1.00"/>
+        <agent x="12.450" y="1.925" radius="0.2" time_gap="1.0" desired_speed="1.00"/>
+        <agent x="13.550" y="0.875" radius="0.2" time_gap="1.0" desired_speed="1.00"/>
+        <agent x="13.550" y="1.925" radius="0.2" time_gap="1.0" desired_speed="1.00"/>
+        <agent x="14.450" y="0.875" radius="0.2" time_gap="1.0" desired_speed="1.00"/>
+        <agent x="14.450" y="1.925" radius="0.2" time_gap="1.0" desired_speed="1.00"/>
+        <agent x="15.550" y="0.875" radius="0.2" time_gap="1.0" desired_speed="1.00"/>
+        <agent x="15.550" y="1.925" radius="0.2" time_gap="1.0" desired_speed="1.00"/>
+        <agent x="16.450" y="0.875" radius="0.2" time_gap="1.0" desired_speed="1.00"/>
+        <agent x="16.450" y="1.925" radius="0.2" time_gap="1.0" desired_speed="1.00"/>
+        <agent x="17.550" y="0.875" radius="0.2" time_gap="1.0" desired_speed="1.00"/>
+        <agent x="17.550" y="1.925" radius="0.2" time_gap="1.0" desired_speed="1.00"/>
+        <agent x="18.450" y="0.875" radius="0.2" time_gap="1.0" desired_speed="1.00"/>
+        <agent x="18.450" y="1.925" radius="0.2" time_gap="1.0" desired_speed="1.00"/>
+        <agent x="19.550" y="0.875" radius="0.2" time_gap="1.0" desired_speed="1.00"/>
+        <agent x="19.550" y="1.925" radius="0.2" time_gap="1.0" desired_speed="1.00"/>
+        <agent x="20.450" y="0.875" radius="0.2" time_gap="1.0" desired_speed="1.00"/>
+        <agent x="20.450" y="1.925" radius="0.2" time_gap="1.0" desired_speed="1.00"/>
+        <agent x="21.550" y="0.875" radius="0.2" time_gap="1.0" desired_speed="1.00"/>
+        <agent x="21.550" y="1.925" radius="0.2" time_gap="1.0" desired_speed="1.00"/>
+        <agent x="0.450" y="6.075" radius="0.2" time_gap="1.0" desired_speed="1.00"/>
+        <agent x="0.450" y="7.125" radius="0.2" time_gap="1.0" desired_speed="1.00"/>
+        <agent x="1.550" y="6.075" radius="0.2" time_gap="1.0" desired_speed="1.00"/>
+        <agent x="1.550" y="7.125" radius="0.2" time_gap="1.0" desired_speed="1.00"/>
+        <agent x="2.450" y="6.075" radius="0.2" time_gap="1.0" desired_speed="1.00"/>
+        <agent x="2.450" y="7.125" radius="0.2" time_gap="1.0" desired_speed="1.00"/>
+        <agent x="3.550" y="6.075" radius="0.2" time_gap="1.0" desired_speed="1.00"/>
+        <agent x="3.550" y="7.125" radius="0.2" time_gap="1.0" desired_speed="1.00"/>
+        <agent x="4.450" y="6.075" radius="0.2" time_gap="1.0" desired_speed="1.00"/>
+        <agent x="4.450" y="7.125" radius="0.2" time_gap="1.0" desired_speed="1.00"/>
+        <agent x="5.550" y="6.075" radius="0.2" time_gap="1.0" desired_speed="1.00"/>
+        <agent x="5.550" y="7.125" radius="0.2" time_gap="1.0" desired_speed="1.00"/>
+        <agent x="6.450" y="6.075" radius="0.2" time_gap="1.0" desired_speed="1.00"/>
+        <agent x="6.450" y="7.125" radius="0.2" time_gap="1.0" desired_speed="1.00"/>
+        <agent x="7.550" y="6.075" radius="0.2" time_gap="1.0" desired_speed="1.00"/>
+        <agent x="7.550" y="7.125" radius="0.2" time_gap="1.0" desired_speed="1.00"/>
+        <agent x="8.450" y="6.075" radius="0.2" time_gap="1.0" desired_speed="1.00"/>
+        <agent x="8.450" y="7.125" radius="0.2" time_gap="1.0" desired_speed="1.00"/>
+        <agent x="9.550" y="6.075" radius="0.2" time_gap="1.0" desired_speed="1.00"/>
+        <agent x="9.550" y="7.125" radius="0.2" time_gap="1.0" desired_speed="1.00"/>
+        <agent x="10.450" y="6.075" radius="0.2" time_gap="1.0" desired_speed="1.00"/>
+        <agent x="10.450" y="7.125" radius="0.2" time_gap="1.0" desired_speed="1.00"/>
+        <agent x="11.550" y="6.075" radius="0.2" time_gap="1.0" desired_speed="1.00"/>
+        <agent x="11.550" y="7.125" radius="0.2" time_gap="1.0" desired_speed="1.00"/>
+        <agent x="12.450" y="6.075" radius="0.2" time_gap="1.0" desired_speed="1.00"/>
+        <agent x="12.450" y="7.125" radius="0.2" time_gap="1.0" desired_speed="1.00"/>
+        <agent x="13.550" y="6.075" radius="0.2" time_gap="1.0" desired_speed="1.00"/>
+        <agent x="13.550" y="7.125" radius="0.2" time_gap="1.0" desired_speed="1.00"/>
+        <agent x="14.450" y="6.075" radius="0.2" time_gap="1.0" desired_speed="1.00"/>
+        <agent x="14.450" y="7.125" radius="0.2" time_gap="1.0" desired_speed="1.00"/>
+        <agent x="15.550" y="6.075" radius="0.2" time_gap="1.0" desired_speed="1.00"/>
+        <agent x="15.550" y="7.125" radius="0.2" time_gap="1.0" desired_speed="1.00"/>
+        <agent x="16.450" y="6.075" radius="0.2" time_gap="1.0" desired_speed="1.00"/>
+        <agent x="16.450" y="7.125" radius="0.2" time_gap="1.0" desired_speed="1.00"/>
+        <agent x="17.550" y="6.075" radius="0.2" time_gap="1.0" desired_speed="1.00"/>
+        <agent x="17.550" y="7.125" radius="0.2" time_gap="1.0" desired_speed="1.00"/>
+        <agent x="18.450" y="6.075" radius="0.2" time_gap="1.0" desired_speed="1.00"/>
+        <agent x="18.450" y="7.125" radius="0.2" time_gap="1.0" desired_speed="1.00"/>
+        <agent x="19.550" y="6.075" radius="0.2" time_gap="1.0" desired_speed="1.00"/>
+        <agent x="19.550" y="7.125" radius="0.2" time_gap="1.0" desired_speed="1.00"/>
+        <agent x="20.450" y="6.075" radius="0.2" time_gap="1.0" desired_speed="1.00"/>
+        <agent x="20.450" y="7.125" radius="0.2" time_gap="1.0" desired_speed="1.00"/>
+        <agent x="21.550" y="6.075" radius="0.2" time_gap="1.0" desired_speed="1.00"/>
+        <agent x="21.550" y="7.125" radius="0.2" time_gap="1.0" desired_speed="1.00"/>
+        <agent x="0.450" y="8.875" radius="0.2" time_gap="1.0" desired_speed="1.00"/>
+        <agent x="0.450" y="9.925" radius="0.2" time_gap="1.0" desired_speed="1.00"/>
+        <agent x="1.550" y="8.875" radius="0.2" time_gap="1.0" desired_speed="1.00"/>
+        <agent x="1.550" y="9.925" radius="0.2" time_gap="1.0" desired_speed="1.00"/>
+        <agent x="2.450" y="8.875" radius="0.2" time_gap="1.0" desired_speed="1.00"/>
+        <agent x="2.450" y="9.925" radius="0.2" time_gap="1.0" desired_speed="1.00"/>
+        <agent x="3.550" y="8.875" radius="0.2" time_gap="1.0" desired_speed="1.00"/>
+        <agent x="3.550" y="9.925" radius="0.2" time_gap="1.0" desired_speed="1.00"/>
+        <agent x="4.450" y="8.875" radius="0.2" time_gap="1.0" desired_speed="1.00"/>
+        <agent x="4.450" y="9.925" radius="0.2" time_gap="1.0" desired_speed="1.00"/>
+        <agent x="5.550" y="8.875" radius="0.2" time_gap="1.0" desired_speed="1.00"/>
+        <agent x="5.550" y="9.925" radius="0.2" time_gap="1.0" desired_speed="1.00"/>
+        <agent x="6.450" y="8.875" radius="0.2" time_gap="1.0" desired_speed="1.00"/>
+        <agent x="6.450" y="9.925" radius="0.2" time_gap="1.0" desired_speed="1.00"/>
+        <agent x="7.550" y="8.875" radius="0.2" time_gap="1.0" desired_speed="1.00"/>
+        <agent x="7.550" y="9.925" radius="0.2" time_gap="1.0" desired_speed="1.00"/>
+        <agent x="8.450" y="8.875" radius="0.2" time_gap="1.0" desired_speed="1.00"/>
+        <agent x="8.450" y="9.925" radius="0.2" time_gap="1.0" desired_speed="1.00"/>
+        <agent x="9.550" y="8.875" radius="0.2" time_gap="1.0" desired_speed="1.00"/>
+        <agent x="9.550" y="9.925" radius="0.2" time_gap="1.0" desired_speed="1.00"/>
+        <agent x="10.450" y="8.875" radius="0.2" time_gap="1.0" desired_speed="1.00"/>
+        <agent x="10.450" y="9.925" radius="0.2" time_gap="1.0" desired_speed="1.00"/>
+        <agent x="11.550" y="8.875" radius="0.2" time_gap="1.0" desired_speed="1.00"/>
+        <agent x="11.550" y="9.925" radius="0.2" time_gap="1.0" desired_speed="1.00"/>
+        <agent x="12.450" y="8.875" radius="0.2" time_gap="1.0" desired_speed="1.00"/>
+        <agent x="12.450" y="9.925" radius="0.2" time_gap="1.0" desired_speed="1.00"/>
+        <agent x="13.550" y="8.875" radius="0.2" time_gap="1.0" desired_speed="1.00"/>
+        <agent x="13.550" y="9.925" radius="0.2" time_gap="1.0" desired_speed="1.00"/>
+        <agent x="14.450" y="8.875" radius="0.2" time_gap="1.0" desired_speed="1.00"/>
+        <agent x="14.450" y="9.925" radius="0.2" time_gap="1.0" desired_speed="1.00"/>
+        <agent x="15.550" y="8.875" radius="0.2" time_gap="1.0" desired_speed="1.00"/>
+        <agent x="15.550" y="9.925" radius="0.2" time_gap="1.0" desired_speed="1.00"/>
+        <agent x="16.450" y="8.875" radius="0.2" time_gap="1.0" desired_speed="1.00"/>
+        <agent x="16.450" y="9.925" radius="0.2" time_gap="1.0" desired_speed="1.00"/>
+        <agent x="17.550" y="8.875" radius="0.2" time_gap="1.0" desired_speed="1.00"/>
+        <agent x="17.550" y="9.925" radius="0.2" time_gap="1.0" desired_speed="1.00"/>
+        <agent x="18.450" y="8.875" radius="0.2" time_gap="1.0" desired_speed="1.00"/>
+        <agent x="18.450" y="9.925" radius="0.2" time_gap="1.0" desired_speed="1.00"/>
+        <agent x="19.550" y="8.875" radius="0.2" time_gap="1.0" desired_speed="1.00"/>
+        <agent x="19.550" y="9.925" radius="0.2" time_gap="1.0" desired_speed="1.00"/>
+        <agent x="20.450" y="8.875" radius="0.2" time_gap="1.0" desired_speed="1.00"/>
+        <agent x="20.450" y="9.925" radius="0.2" time_gap="1.0" desired_speed="1.00"/>
+        <agent x="21.550" y="8.875" radius="0.2" time_gap="1.0" desired_speed="1.00"/>
+        <agent x="21.550" y="9.925" radius="0.2" time_gap="1.0" desired_speed="1.00"/>
+        <agent x="0.450" y="14.075" radius="0.2" time_gap="1.0" desired_speed="1.00"/>
+        <agent x="0.450" y="15.125" radius="0.2" time_gap="1.0" desired_speed="1.00"/>
+        <agent x="1.550" y="14.075" radius="0.2" time_gap="1.0" desired_speed="1.00"/>
+        <agent x="1.550" y="15.125" radius="0.2" time_gap="1.0" desired_speed="1.00"/>
+        <agent x="2.450" y="14.075" radius="0.2" time_gap="1.0" desired_speed="1.00"/>
+        <agent x="2.450" y="15.125" radius="0.2" time_gap="1.0" desired_speed="1.00"/>
+        <agent x="3.550" y="14.075" radius="0.2" time_gap="1.0" desired_speed="1.00"/>
+        <agent x="3.550" y="15.125" radius="0.2" time_gap="1.0" desired_speed="1.00"/>
+        <agent x="4.450" y="14.075" radius="0.2" time_gap="1.0" desired_speed="1.00"/>
+        <agent x="4.450" y="15.125" radius="0.2" time_gap="1.0" desired_speed="1.00"/>
+        <agent x="5.550" y="14.075" radius="0.2" time_gap="1.0" desired_speed="1.00"/>
+        <agent x="5.550" y="15.125" radius="0.2" time_gap="1.0" desired_speed="1.00"/>
+        <agent x="6.450" y="14.075" radius="0.2" time_gap="1.0" desired_speed="1.00"/>
+        <agent x="6.450" y="15.125" radius="0.2" time_gap="1.0" desired_speed="1.00"/>
+        <agent x="7.550" y="14.075" radius="0.2" time_gap="1.0" desired_speed="1.00"/>
+        <agent x="7.550" y="15.125" radius="0.2" time_gap="1.0" desired_speed="1.00"/>
+        <agent x="8.450" y="14.075" radius="0.2" time_gap="1.0" desired_speed="1.00"/>
+        <agent x="8.450" y="15.125" radius="0.2" time_gap="1.0" desired_speed="1.00"/>
+        <agent x="9.550" y="14.075" radius="0.2" time_gap="1.0" desired_speed="1.00"/>
+        <agent x="9.550" y="15.125" radius="0.2" time_gap="1.0" desired_speed="1.00"/>
+        <agent x="10.450" y="14.075" radius="0.2" time_gap="1.0" desired_speed="1.00"/>
+        <agent x="10.450" y="15.125" radius="0.2" time_gap="1.0" desired_speed="1.00"/>
+        <agent x="11.550" y="14.075" radius="0.2" time_gap="1.0" desired_speed="1.00"/>
+        <agent x="11.550" y="15.125" radius="0.2" time_gap="1.0" desired_speed="1.00"/>
+        <agent x="12.450" y="14.075" radius="0.2" time_gap="1.0" desired_speed="1.00"/>
+        <agent x="12.450" y="15.125" radius="0.2" time_gap="1.0" desired_speed="1.00"/>
+        <agent x="13.550" y="14.075" radius="0.2" time_gap="1.0" desired_speed="1.00"/>
+        <agent x="13.550" y="15.125" radius="0.2" time_gap="1.0" desired_speed="1.00"/>
+        <agent x="14.450" y="14.075" radius="0.2" time_gap="1.0" desired_speed="1.00"/>
+        <agent x="14.450" y="15.125" radius="0.2" time_gap="1.0" desired_speed="1.00"/>
+        <agent x="15.550" y="14.075" radius="0.2" time_gap="1.0" desired_speed="1.00"/>
+        <agent x="15.550" y="15.125" radius="0.2" time_gap="1.0" desired_speed="1.00"/>
+        <agent x="16.450" y="14.075" radius="0.2" time_gap="1.0" desired_speed="1.00"/>
+        <agent x="16.450" y="15.125" radius="0.2" time_gap="1.0" desired_speed="1.00"/>
+        <agent x="17.550" y="14.075" radius="0.2" time_gap="1.0" desired_speed="1.00"/>
+        <agent x="17.550" y="15.125" radius="0.2" time_gap="1.0" desired_speed="1.00"/>
+        <agent x="18.450" y="14.075" radius="0.2" time_gap="1.0" desired_speed="1.00"/>
+        <agent x="18.450" y="15.125" radius="0.2" time_gap="1.0" desired_speed="1.00"/>
+        <agent x="19.550" y="14.075" radius="0.2" time_gap="1.0" desired_speed="1.00"/>
+        <agent x="19.550" y="15.125" radius="0.2" time_gap="1.0" desired_speed="1.00"/>
+        <agent x="20.450" y="14.075" radius="0.2" time_gap="1.0" desired_speed="1.00"/>
+        <agent x="20.450" y="15.125" radius="0.2" time_gap="1.0" desired_speed="1.00"/>
+        <agent x="21.550" y="14.075" radius="0.2" time_gap="1.0" desired_speed="1.00"/>
+        <agent x="21.550" y="15.125" radius="0.2" time_gap="1.0" desired_speed="1.00"/>
+      </agents>
+    </floor>
+    <floor id="1" flowsimpro_name="Floor 1" flowsimpro_elevation_m="3">
+      <geometry>
+      <walkable><vertex x="0" y="0"/><vertex x="26" y="0"/><vertex x="26" y="16"/><vertex x="0" y="16"/></walkable>
+      <obstacle><vertex x="0" y="2.8"/><vertex x="0.5" y="2.8"/><vertex x="0.5" y="3"/><vertex x="0" y="3"/></obstacle>
+      <obstacle><vertex x="1.5" y="2.8"/><vertex x="2" y="2.8"/><vertex x="2" y="3"/><vertex x="1.5" y="3"/></obstacle>
+      <obstacle><vertex x="2" y="2.8"/><vertex x="2.5" y="2.8"/><vertex x="2.5" y="3"/><vertex x="2" y="3"/></obstacle>
+      <obstacle><vertex x="3.5" y="2.8"/><vertex x="4" y="2.8"/><vertex x="4" y="3"/><vertex x="3.5" y="3"/></obstacle>
+      <obstacle><vertex x="1.9" y="0"/><vertex x="2.1" y="0"/><vertex x="2.1" y="3"/><vertex x="1.9" y="3"/></obstacle>
+      <obstacle><vertex x="4" y="2.8"/><vertex x="4.5" y="2.8"/><vertex x="4.5" y="3"/><vertex x="4" y="3"/></obstacle>
+      <obstacle><vertex x="5.5" y="2.8"/><vertex x="6" y="2.8"/><vertex x="6" y="3"/><vertex x="5.5" y="3"/></obstacle>
+      <obstacle><vertex x="3.9" y="0"/><vertex x="4.1" y="0"/><vertex x="4.1" y="3"/><vertex x="3.9" y="3"/></obstacle>
+      <obstacle><vertex x="6" y="2.8"/><vertex x="6.5" y="2.8"/><vertex x="6.5" y="3"/><vertex x="6" y="3"/></obstacle>
+      <obstacle><vertex x="7.5" y="2.8"/><vertex x="8" y="2.8"/><vertex x="8" y="3"/><vertex x="7.5" y="3"/></obstacle>
+      <obstacle><vertex x="5.9" y="0"/><vertex x="6.1" y="0"/><vertex x="6.1" y="3"/><vertex x="5.9" y="3"/></obstacle>
+      <obstacle><vertex x="8" y="2.8"/><vertex x="8.5" y="2.8"/><vertex x="8.5" y="3"/><vertex x="8" y="3"/></obstacle>
+      <obstacle><vertex x="9.5" y="2.8"/><vertex x="10" y="2.8"/><vertex x="10" y="3"/><vertex x="9.5" y="3"/></obstacle>
+      <obstacle><vertex x="7.9" y="0"/><vertex x="8.1" y="0"/><vertex x="8.1" y="3"/><vertex x="7.9" y="3"/></obstacle>
+      <obstacle><vertex x="10" y="2.8"/><vertex x="10.5" y="2.8"/><vertex x="10.5" y="3"/><vertex x="10" y="3"/></obstacle>
+      <obstacle><vertex x="11.5" y="2.8"/><vertex x="12" y="2.8"/><vertex x="12" y="3"/><vertex x="11.5" y="3"/></obstacle>
+      <obstacle><vertex x="9.9" y="0"/><vertex x="10.1" y="0"/><vertex x="10.1" y="3"/><vertex x="9.9" y="3"/></obstacle>
+      <obstacle><vertex x="12" y="2.8"/><vertex x="12.5" y="2.8"/><vertex x="12.5" y="3"/><vertex x="12" y="3"/></obstacle>
+      <obstacle><vertex x="13.5" y="2.8"/><vertex x="14" y="2.8"/><vertex x="14" y="3"/><vertex x="13.5" y="3"/></obstacle>
+      <obstacle><vertex x="11.9" y="0"/><vertex x="12.1" y="0"/><vertex x="12.1" y="3"/><vertex x="11.9" y="3"/></obstacle>
+      <obstacle><vertex x="14" y="2.8"/><vertex x="14.5" y="2.8"/><vertex x="14.5" y="3"/><vertex x="14" y="3"/></obstacle>
+      <obstacle><vertex x="15.5" y="2.8"/><vertex x="16" y="2.8"/><vertex x="16" y="3"/><vertex x="15.5" y="3"/></obstacle>
+      <obstacle><vertex x="13.9" y="0"/><vertex x="14.1" y="0"/><vertex x="14.1" y="3"/><vertex x="13.9" y="3"/></obstacle>
+      <obstacle><vertex x="16" y="2.8"/><vertex x="16.5" y="2.8"/><vertex x="16.5" y="3"/><vertex x="16" y="3"/></obstacle>
+      <obstacle><vertex x="17.5" y="2.8"/><vertex x="18" y="2.8"/><vertex x="18" y="3"/><vertex x="17.5" y="3"/></obstacle>
+      <obstacle><vertex x="15.9" y="0"/><vertex x="16.1" y="0"/><vertex x="16.1" y="3"/><vertex x="15.9" y="3"/></obstacle>
+      <obstacle><vertex x="18" y="2.8"/><vertex x="18.5" y="2.8"/><vertex x="18.5" y="3"/><vertex x="18" y="3"/></obstacle>
+      <obstacle><vertex x="19.5" y="2.8"/><vertex x="20" y="2.8"/><vertex x="20" y="3"/><vertex x="19.5" y="3"/></obstacle>
+      <obstacle><vertex x="17.9" y="0"/><vertex x="18.1" y="0"/><vertex x="18.1" y="3"/><vertex x="17.9" y="3"/></obstacle>
+      <obstacle><vertex x="20" y="2.8"/><vertex x="20.5" y="2.8"/><vertex x="20.5" y="3"/><vertex x="20" y="3"/></obstacle>
+      <obstacle><vertex x="21.5" y="2.8"/><vertex x="22" y="2.8"/><vertex x="22" y="3"/><vertex x="21.5" y="3"/></obstacle>
+      <obstacle><vertex x="19.9" y="0"/><vertex x="20.1" y="0"/><vertex x="20.1" y="3"/><vertex x="19.9" y="3"/></obstacle>
+      <obstacle><vertex x="0" y="5"/><vertex x="0.5" y="5"/><vertex x="0.5" y="5.2"/><vertex x="0" y="5.2"/></obstacle>
+      <obstacle><vertex x="1.5" y="5"/><vertex x="2" y="5"/><vertex x="2" y="5.2"/><vertex x="1.5" y="5.2"/></obstacle>
+      <obstacle><vertex x="2" y="5"/><vertex x="2.5" y="5"/><vertex x="2.5" y="5.2"/><vertex x="2" y="5.2"/></obstacle>
+      <obstacle><vertex x="3.5" y="5"/><vertex x="4" y="5"/><vertex x="4" y="5.2"/><vertex x="3.5" y="5.2"/></obstacle>
+      <obstacle><vertex x="1.9" y="5"/><vertex x="2.1" y="5"/><vertex x="2.1" y="8"/><vertex x="1.9" y="8"/></obstacle>
+      <obstacle><vertex x="4" y="5"/><vertex x="4.5" y="5"/><vertex x="4.5" y="5.2"/><vertex x="4" y="5.2"/></obstacle>
+      <obstacle><vertex x="5.5" y="5"/><vertex x="6" y="5"/><vertex x="6" y="5.2"/><vertex x="5.5" y="5.2"/></obstacle>
+      <obstacle><vertex x="3.9" y="5"/><vertex x="4.1" y="5"/><vertex x="4.1" y="8"/><vertex x="3.9" y="8"/></obstacle>
+      <obstacle><vertex x="6" y="5"/><vertex x="6.5" y="5"/><vertex x="6.5" y="5.2"/><vertex x="6" y="5.2"/></obstacle>
+      <obstacle><vertex x="7.5" y="5"/><vertex x="8" y="5"/><vertex x="8" y="5.2"/><vertex x="7.5" y="5.2"/></obstacle>
+      <obstacle><vertex x="5.9" y="5"/><vertex x="6.1" y="5"/><vertex x="6.1" y="8"/><vertex x="5.9" y="8"/></obstacle>
+      <obstacle><vertex x="8" y="5"/><vertex x="8.5" y="5"/><vertex x="8.5" y="5.2"/><vertex x="8" y="5.2"/></obstacle>
+      <obstacle><vertex x="9.5" y="5"/><vertex x="10" y="5"/><vertex x="10" y="5.2"/><vertex x="9.5" y="5.2"/></obstacle>
+      <obstacle><vertex x="7.9" y="5"/><vertex x="8.1" y="5"/><vertex x="8.1" y="8"/><vertex x="7.9" y="8"/></obstacle>
+      <obstacle><vertex x="10" y="5"/><vertex x="10.5" y="5"/><vertex x="10.5" y="5.2"/><vertex x="10" y="5.2"/></obstacle>
+      <obstacle><vertex x="11.5" y="5"/><vertex x="12" y="5"/><vertex x="12" y="5.2"/><vertex x="11.5" y="5.2"/></obstacle>
+      <obstacle><vertex x="9.9" y="5"/><vertex x="10.1" y="5"/><vertex x="10.1" y="8"/><vertex x="9.9" y="8"/></obstacle>
+      <obstacle><vertex x="12" y="5"/><vertex x="12.5" y="5"/><vertex x="12.5" y="5.2"/><vertex x="12" y="5.2"/></obstacle>
+      <obstacle><vertex x="13.5" y="5"/><vertex x="14" y="5"/><vertex x="14" y="5.2"/><vertex x="13.5" y="5.2"/></obstacle>
+      <obstacle><vertex x="11.9" y="5"/><vertex x="12.1" y="5"/><vertex x="12.1" y="8"/><vertex x="11.9" y="8"/></obstacle>
+      <obstacle><vertex x="14" y="5"/><vertex x="14.5" y="5"/><vertex x="14.5" y="5.2"/><vertex x="14" y="5.2"/></obstacle>
+      <obstacle><vertex x="15.5" y="5"/><vertex x="16" y="5"/><vertex x="16" y="5.2"/><vertex x="15.5" y="5.2"/></obstacle>
+      <obstacle><vertex x="13.9" y="5"/><vertex x="14.1" y="5"/><vertex x="14.1" y="8"/><vertex x="13.9" y="8"/></obstacle>
+      <obstacle><vertex x="16" y="5"/><vertex x="16.5" y="5"/><vertex x="16.5" y="5.2"/><vertex x="16" y="5.2"/></obstacle>
+      <obstacle><vertex x="17.5" y="5"/><vertex x="18" y="5"/><vertex x="18" y="5.2"/><vertex x="17.5" y="5.2"/></obstacle>
+      <obstacle><vertex x="15.9" y="5"/><vertex x="16.1" y="5"/><vertex x="16.1" y="8"/><vertex x="15.9" y="8"/></obstacle>
+      <obstacle><vertex x="18" y="5"/><vertex x="18.5" y="5"/><vertex x="18.5" y="5.2"/><vertex x="18" y="5.2"/></obstacle>
+      <obstacle><vertex x="19.5" y="5"/><vertex x="20" y="5"/><vertex x="20" y="5.2"/><vertex x="19.5" y="5.2"/></obstacle>
+      <obstacle><vertex x="17.9" y="5"/><vertex x="18.1" y="5"/><vertex x="18.1" y="8"/><vertex x="17.9" y="8"/></obstacle>
+      <obstacle><vertex x="20" y="5"/><vertex x="20.5" y="5"/><vertex x="20.5" y="5.2"/><vertex x="20" y="5.2"/></obstacle>
+      <obstacle><vertex x="21.5" y="5"/><vertex x="22" y="5"/><vertex x="22" y="5.2"/><vertex x="21.5" y="5.2"/></obstacle>
+      <obstacle><vertex x="19.9" y="5"/><vertex x="20.1" y="5"/><vertex x="20.1" y="8"/><vertex x="19.9" y="8"/></obstacle>
+      <obstacle><vertex x="0" y="10.8"/><vertex x="0.5" y="10.8"/><vertex x="0.5" y="11"/><vertex x="0" y="11"/></obstacle>
+      <obstacle><vertex x="1.5" y="10.8"/><vertex x="2" y="10.8"/><vertex x="2" y="11"/><vertex x="1.5" y="11"/></obstacle>
+      <obstacle><vertex x="2" y="10.8"/><vertex x="2.5" y="10.8"/><vertex x="2.5" y="11"/><vertex x="2" y="11"/></obstacle>
+      <obstacle><vertex x="3.5" y="10.8"/><vertex x="4" y="10.8"/><vertex x="4" y="11"/><vertex x="3.5" y="11"/></obstacle>
+      <obstacle><vertex x="1.9" y="8"/><vertex x="2.1" y="8"/><vertex x="2.1" y="11"/><vertex x="1.9" y="11"/></obstacle>
+      <obstacle><vertex x="4" y="10.8"/><vertex x="4.5" y="10.8"/><vertex x="4.5" y="11"/><vertex x="4" y="11"/></obstacle>
+      <obstacle><vertex x="5.5" y="10.8"/><vertex x="6" y="10.8"/><vertex x="6" y="11"/><vertex x="5.5" y="11"/></obstacle>
+      <obstacle><vertex x="3.9" y="8"/><vertex x="4.1" y="8"/><vertex x="4.1" y="11"/><vertex x="3.9" y="11"/></obstacle>
+      <obstacle><vertex x="6" y="10.8"/><vertex x="6.5" y="10.8"/><vertex x="6.5" y="11"/><vertex x="6" y="11"/></obstacle>
+      <obstacle><vertex x="7.5" y="10.8"/><vertex x="8" y="10.8"/><vertex x="8" y="11"/><vertex x="7.5" y="11"/></obstacle>
+      <obstacle><vertex x="5.9" y="8"/><vertex x="6.1" y="8"/><vertex x="6.1" y="11"/><vertex x="5.9" y="11"/></obstacle>
+      <obstacle><vertex x="8" y="10.8"/><vertex x="8.5" y="10.8"/><vertex x="8.5" y="11"/><vertex x="8" y="11"/></obstacle>
+      <obstacle><vertex x="9.5" y="10.8"/><vertex x="10" y="10.8"/><vertex x="10" y="11"/><vertex x="9.5" y="11"/></obstacle>
+      <obstacle><vertex x="7.9" y="8"/><vertex x="8.1" y="8"/><vertex x="8.1" y="11"/><vertex x="7.9" y="11"/></obstacle>
+      <obstacle><vertex x="10" y="10.8"/><vertex x="10.5" y="10.8"/><vertex x="10.5" y="11"/><vertex x="10" y="11"/></obstacle>
+      <obstacle><vertex x="11.5" y="10.8"/><vertex x="12" y="10.8"/><vertex x="12" y="11"/><vertex x="11.5" y="11"/></obstacle>
+      <obstacle><vertex x="9.9" y="8"/><vertex x="10.1" y="8"/><vertex x="10.1" y="11"/><vertex x="9.9" y="11"/></obstacle>
+      <obstacle><vertex x="12" y="10.8"/><vertex x="12.5" y="10.8"/><vertex x="12.5" y="11"/><vertex x="12" y="11"/></obstacle>
+      <obstacle><vertex x="13.5" y="10.8"/><vertex x="14" y="10.8"/><vertex x="14" y="11"/><vertex x="13.5" y="11"/></obstacle>
+      <obstacle><vertex x="11.9" y="8"/><vertex x="12.1" y="8"/><vertex x="12.1" y="11"/><vertex x="11.9" y="11"/></obstacle>
+      <obstacle><vertex x="14" y="10.8"/><vertex x="14.5" y="10.8"/><vertex x="14.5" y="11"/><vertex x="14" y="11"/></obstacle>
+      <obstacle><vertex x="15.5" y="10.8"/><vertex x="16" y="10.8"/><vertex x="16" y="11"/><vertex x="15.5" y="11"/></obstacle>
+      <obstacle><vertex x="13.9" y="8"/><vertex x="14.1" y="8"/><vertex x="14.1" y="11"/><vertex x="13.9" y="11"/></obstacle>
+      <obstacle><vertex x="16" y="10.8"/><vertex x="16.5" y="10.8"/><vertex x="16.5" y="11"/><vertex x="16" y="11"/></obstacle>
+      <obstacle><vertex x="17.5" y="10.8"/><vertex x="18" y="10.8"/><vertex x="18" y="11"/><vertex x="17.5" y="11"/></obstacle>
+      <obstacle><vertex x="15.9" y="8"/><vertex x="16.1" y="8"/><vertex x="16.1" y="11"/><vertex x="15.9" y="11"/></obstacle>
+      <obstacle><vertex x="18" y="10.8"/><vertex x="18.5" y="10.8"/><vertex x="18.5" y="11"/><vertex x="18" y="11"/></obstacle>
+      <obstacle><vertex x="19.5" y="10.8"/><vertex x="20" y="10.8"/><vertex x="20" y="11"/><vertex x="19.5" y="11"/></obstacle>
+      <obstacle><vertex x="17.9" y="8"/><vertex x="18.1" y="8"/><vertex x="18.1" y="11"/><vertex x="17.9" y="11"/></obstacle>
+      <obstacle><vertex x="20" y="10.8"/><vertex x="20.5" y="10.8"/><vertex x="20.5" y="11"/><vertex x="20" y="11"/></obstacle>
+      <obstacle><vertex x="21.5" y="10.8"/><vertex x="22" y="10.8"/><vertex x="22" y="11"/><vertex x="21.5" y="11"/></obstacle>
+      <obstacle><vertex x="19.9" y="8"/><vertex x="20.1" y="8"/><vertex x="20.1" y="11"/><vertex x="19.9" y="11"/></obstacle>
+      <obstacle><vertex x="0" y="13"/><vertex x="0.5" y="13"/><vertex x="0.5" y="13.2"/><vertex x="0" y="13.2"/></obstacle>
+      <obstacle><vertex x="1.5" y="13"/><vertex x="2" y="13"/><vertex x="2" y="13.2"/><vertex x="1.5" y="13.2"/></obstacle>
+      <obstacle><vertex x="2" y="13"/><vertex x="2.5" y="13"/><vertex x="2.5" y="13.2"/><vertex x="2" y="13.2"/></obstacle>
+      <obstacle><vertex x="3.5" y="13"/><vertex x="4" y="13"/><vertex x="4" y="13.2"/><vertex x="3.5" y="13.2"/></obstacle>
+      <obstacle><vertex x="1.9" y="13"/><vertex x="2.1" y="13"/><vertex x="2.1" y="16"/><vertex x="1.9" y="16"/></obstacle>
+      <obstacle><vertex x="4" y="13"/><vertex x="4.5" y="13"/><vertex x="4.5" y="13.2"/><vertex x="4" y="13.2"/></obstacle>
+      <obstacle><vertex x="5.5" y="13"/><vertex x="6" y="13"/><vertex x="6" y="13.2"/><vertex x="5.5" y="13.2"/></obstacle>
+      <obstacle><vertex x="3.9" y="13"/><vertex x="4.1" y="13"/><vertex x="4.1" y="16"/><vertex x="3.9" y="16"/></obstacle>
+      <obstacle><vertex x="6" y="13"/><vertex x="6.5" y="13"/><vertex x="6.5" y="13.2"/><vertex x="6" y="13.2"/></obstacle>
+      <obstacle><vertex x="7.5" y="13"/><vertex x="8" y="13"/><vertex x="8" y="13.2"/><vertex x="7.5" y="13.2"/></obstacle>
+      <obstacle><vertex x="5.9" y="13"/><vertex x="6.1" y="13"/><vertex x="6.1" y="16"/><vertex x="5.9" y="16"/></obstacle>
+      <obstacle><vertex x="8" y="13"/><vertex x="8.5" y="13"/><vertex x="8.5" y="13.2"/><vertex x="8" y="13.2"/></obstacle>
+      <obstacle><vertex x="9.5" y="13"/><vertex x="10" y="13"/><vertex x="10" y="13.2"/><vertex x="9.5" y="13.2"/></obstacle>
+      <obstacle><vertex x="7.9" y="13"/><vertex x="8.1" y="13"/><vertex x="8.1" y="16"/><vertex x="7.9" y="16"/></obstacle>
+      <obstacle><vertex x="10" y="13"/><vertex x="10.5" y="13"/><vertex x="10.5" y="13.2"/><vertex x="10" y="13.2"/></obstacle>
+      <obstacle><vertex x="11.5" y="13"/><vertex x="12" y="13"/><vertex x="12" y="13.2"/><vertex x="11.5" y="13.2"/></obstacle>
+      <obstacle><vertex x="9.9" y="13"/><vertex x="10.1" y="13"/><vertex x="10.1" y="16"/><vertex x="9.9" y="16"/></obstacle>
+      <obstacle><vertex x="12" y="13"/><vertex x="12.5" y="13"/><vertex x="12.5" y="13.2"/><vertex x="12" y="13.2"/></obstacle>
+      <obstacle><vertex x="13.5" y="13"/><vertex x="14" y="13"/><vertex x="14" y="13.2"/><vertex x="13.5" y="13.2"/></obstacle>
+      <obstacle><vertex x="11.9" y="13"/><vertex x="12.1" y="13"/><vertex x="12.1" y="16"/><vertex x="11.9" y="16"/></obstacle>
+      <obstacle><vertex x="14" y="13"/><vertex x="14.5" y="13"/><vertex x="14.5" y="13.2"/><vertex x="14" y="13.2"/></obstacle>
+      <obstacle><vertex x="15.5" y="13"/><vertex x="16" y="13"/><vertex x="16" y="13.2"/><vertex x="15.5" y="13.2"/></obstacle>
+      <obstacle><vertex x="13.9" y="13"/><vertex x="14.1" y="13"/><vertex x="14.1" y="16"/><vertex x="13.9" y="16"/></obstacle>
+      <obstacle><vertex x="16" y="13"/><vertex x="16.5" y="13"/><vertex x="16.5" y="13.2"/><vertex x="16" y="13.2"/></obstacle>
+      <obstacle><vertex x="17.5" y="13"/><vertex x="18" y="13"/><vertex x="18" y="13.2"/><vertex x="17.5" y="13.2"/></obstacle>
+      <obstacle><vertex x="15.9" y="13"/><vertex x="16.1" y="13"/><vertex x="16.1" y="16"/><vertex x="15.9" y="16"/></obstacle>
+      <obstacle><vertex x="18" y="13"/><vertex x="18.5" y="13"/><vertex x="18.5" y="13.2"/><vertex x="18" y="13.2"/></obstacle>
+      <obstacle><vertex x="19.5" y="13"/><vertex x="20" y="13"/><vertex x="20" y="13.2"/><vertex x="19.5" y="13.2"/></obstacle>
+      <obstacle><vertex x="17.9" y="13"/><vertex x="18.1" y="13"/><vertex x="18.1" y="16"/><vertex x="17.9" y="16"/></obstacle>
+      <obstacle><vertex x="20" y="13"/><vertex x="20.5" y="13"/><vertex x="20.5" y="13.2"/><vertex x="20" y="13.2"/></obstacle>
+      <obstacle><vertex x="21.5" y="13"/><vertex x="22" y="13"/><vertex x="22" y="13.2"/><vertex x="21.5" y="13.2"/></obstacle>
+      <obstacle><vertex x="19.9" y="13"/><vertex x="20.1" y="13"/><vertex x="20.1" y="16"/><vertex x="19.9" y="16"/></obstacle>
+      <obstacle><vertex x="22" y="0"/><vertex x="22.2" y="0"/><vertex x="22.2" y="3"/><vertex x="22" y="3"/></obstacle>
+      <obstacle><vertex x="22" y="5"/><vertex x="22.2" y="5"/><vertex x="22.2" y="11"/><vertex x="22" y="11"/></obstacle>
+      <obstacle><vertex x="22" y="13"/><vertex x="22.2" y="13"/><vertex x="22.2" y="16"/><vertex x="22" y="16"/></obstacle>
+      </geometry>
+      <!-- The head of the stairway down. It holds the <stair>
+           entrance, which is how the solver tells it from a way out. -->
+      <exit><vertex x="22.2" y="3"/><vertex x="26" y="3"/><vertex x="26" y="11"/><vertex x="22.2" y="11"/></exit>
+      <agents>
+        <agent x="0.450" y="0.875" radius="0.2" time_gap="1.0" desired_speed="1.00"/>
+        <agent x="0.450" y="1.925" radius="0.2" time_gap="1.0" desired_speed="1.00"/>
+        <agent x="1.550" y="0.875" radius="0.2" time_gap="1.0" desired_speed="1.00"/>
+        <agent x="1.550" y="1.925" radius="0.2" time_gap="1.0" desired_speed="1.00"/>
+        <agent x="2.450" y="0.875" radius="0.2" time_gap="1.0" desired_speed="1.00"/>
+        <agent x="2.450" y="1.925" radius="0.2" time_gap="1.0" desired_speed="1.00"/>
+        <agent x="3.550" y="0.875" radius="0.2" time_gap="1.0" desired_speed="1.00"/>
+        <agent x="3.550" y="1.925" radius="0.2" time_gap="1.0" desired_speed="1.00"/>
+        <agent x="4.450" y="0.875" radius="0.2" time_gap="1.0" desired_speed="1.00"/>
+        <agent x="4.450" y="1.925" radius="0.2" time_gap="1.0" desired_speed="1.00"/>
+        <agent x="5.550" y="0.875" radius="0.2" time_gap="1.0" desired_speed="1.00"/>
+        <agent x="5.550" y="1.925" radius="0.2" time_gap="1.0" desired_speed="1.00"/>
+        <agent x="6.450" y="0.875" radius="0.2" time_gap="1.0" desired_speed="1.00"/>
+        <agent x="6.450" y="1.925" radius="0.2" time_gap="1.0" desired_speed="1.00"/>
+        <agent x="7.550" y="0.875" radius="0.2" time_gap="1.0" desired_speed="1.00"/>
+        <agent x="7.550" y="1.925" radius="0.2" time_gap="1.0" desired_speed="1.00"/>
+        <agent x="8.450" y="0.875" radius="0.2" time_gap="1.0" desired_speed="1.00"/>
+        <agent x="8.450" y="1.925" radius="0.2" time_gap="1.0" desired_speed="1.00"/>
+        <agent x="9.550" y="0.875" radius="0.2" time_gap="1.0" desired_speed="1.00"/>
+        <agent x="9.550" y="1.925" radius="0.2" time_gap="1.0" desired_speed="1.00"/>
+        <agent x="10.450" y="0.875" radius="0.2" time_gap="1.0" desired_speed="1.00"/>
+        <agent x="10.450" y="1.925" radius="0.2" time_gap="1.0" desired_speed="1.00"/>
+        <agent x="11.550" y="0.875" radius="0.2" time_gap="1.0" desired_speed="1.00"/>
+        <agent x="11.550" y="1.925" radius="0.2" time_gap="1.0" desired_speed="1.00"/>
+        <agent x="12.450" y="0.875" radius="0.2" time_gap="1.0" desired_speed="1.00"/>
+        <agent x="12.450" y="1.925" radius="0.2" time_gap="1.0" desired_speed="1.00"/>
+        <agent x="13.550" y="0.875" radius="0.2" time_gap="1.0" desired_speed="1.00"/>
+        <agent x="13.550" y="1.925" radius="0.2" time_gap="1.0" desired_speed="1.00"/>
+        <agent x="14.450" y="0.875" radius="0.2" time_gap="1.0" desired_speed="1.00"/>
+        <agent x="14.450" y="1.925" radius="0.2" time_gap="1.0" desired_speed="1.00"/>
+        <agent x="15.550" y="0.875" radius="0.2" time_gap="1.0" desired_speed="1.00"/>
+        <agent x="15.550" y="1.925" radius="0.2" time_gap="1.0" desired_speed="1.00"/>
+        <agent x="16.450" y="0.875" radius="0.2" time_gap="1.0" desired_speed="1.00"/>
+        <agent x="16.450" y="1.925" radius="0.2" time_gap="1.0" desired_speed="1.00"/>
+        <agent x="17.550" y="0.875" radius="0.2" time_gap="1.0" desired_speed="1.00"/>
+        <agent x="17.550" y="1.925" radius="0.2" time_gap="1.0" desired_speed="1.00"/>
+        <agent x="18.450" y="0.875" radius="0.2" time_gap="1.0" desired_speed="1.00"/>
+        <agent x="18.450" y="1.925" radius="0.2" time_gap="1.0" desired_speed="1.00"/>
+        <agent x="19.550" y="0.875" radius="0.2" time_gap="1.0" desired_speed="1.00"/>
+        <agent x="19.550" y="1.925" radius="0.2" time_gap="1.0" desired_speed="1.00"/>
+        <agent x="20.450" y="0.875" radius="0.2" time_gap="1.0" desired_speed="1.00"/>
+        <agent x="20.450" y="1.925" radius="0.2" time_gap="1.0" desired_speed="1.00"/>
+        <agent x="21.550" y="0.875" radius="0.2" time_gap="1.0" desired_speed="1.00"/>
+        <agent x="21.550" y="1.925" radius="0.2" time_gap="1.0" desired_speed="1.00"/>
+        <agent x="0.450" y="6.075" radius="0.2" time_gap="1.0" desired_speed="1.00"/>
+        <agent x="0.450" y="7.125" radius="0.2" time_gap="1.0" desired_speed="1.00"/>
+        <agent x="1.550" y="6.075" radius="0.2" time_gap="1.0" desired_speed="1.00"/>
+        <agent x="1.550" y="7.125" radius="0.2" time_gap="1.0" desired_speed="1.00"/>
+        <agent x="2.450" y="6.075" radius="0.2" time_gap="1.0" desired_speed="1.00"/>
+        <agent x="2.450" y="7.125" radius="0.2" time_gap="1.0" desired_speed="1.00"/>
+        <agent x="3.550" y="6.075" radius="0.2" time_gap="1.0" desired_speed="1.00"/>
+        <agent x="3.550" y="7.125" radius="0.2" time_gap="1.0" desired_speed="1.00"/>
+        <agent x="4.450" y="6.075" radius="0.2" time_gap="1.0" desired_speed="1.00"/>
+        <agent x="4.450" y="7.125" radius="0.2" time_gap="1.0" desired_speed="1.00"/>
+        <agent x="5.550" y="6.075" radius="0.2" time_gap="1.0" desired_speed="1.00"/>
+        <agent x="5.550" y="7.125" radius="0.2" time_gap="1.0" desired_speed="1.00"/>
+        <agent x="6.450" y="6.075" radius="0.2" time_gap="1.0" desired_speed="1.00"/>
+        <agent x="6.450" y="7.125" radius="0.2" time_gap="1.0" desired_speed="1.00"/>
+        <agent x="7.550" y="6.075" radius="0.2" time_gap="1.0" desired_speed="1.00"/>
+        <agent x="7.550" y="7.125" radius="0.2" time_gap="1.0" desired_speed="1.00"/>
+        <agent x="8.450" y="6.075" radius="0.2" time_gap="1.0" desired_speed="1.00"/>
+        <agent x="8.450" y="7.125" radius="0.2" time_gap="1.0" desired_speed="1.00"/>
+        <agent x="9.550" y="6.075" radius="0.2" time_gap="1.0" desired_speed="1.00"/>
+        <agent x="9.550" y="7.125" radius="0.2" time_gap="1.0" desired_speed="1.00"/>
+        <agent x="10.450" y="6.075" radius="0.2" time_gap="1.0" desired_speed="1.00"/>
+        <agent x="10.450" y="7.125" radius="0.2" time_gap="1.0" desired_speed="1.00"/>
+        <agent x="11.550" y="6.075" radius="0.2" time_gap="1.0" desired_speed="1.00"/>
+        <agent x="11.550" y="7.125" radius="0.2" time_gap="1.0" desired_speed="1.00"/>
+        <agent x="12.450" y="6.075" radius="0.2" time_gap="1.0" desired_speed="1.00"/>
+        <agent x="12.450" y="7.125" radius="0.2" time_gap="1.0" desired_speed="1.00"/>
+        <agent x="13.550" y="6.075" radius="0.2" time_gap="1.0" desired_speed="1.00"/>
+        <agent x="13.550" y="7.125" radius="0.2" time_gap="1.0" desired_speed="1.00"/>
+        <agent x="14.450" y="6.075" radius="0.2" time_gap="1.0" desired_speed="1.00"/>
+        <agent x="14.450" y="7.125" radius="0.2" time_gap="1.0" desired_speed="1.00"/>
+        <agent x="15.550" y="6.075" radius="0.2" time_gap="1.0" desired_speed="1.00"/>
+        <agent x="15.550" y="7.125" radius="0.2" time_gap="1.0" desired_speed="1.00"/>
+        <agent x="16.450" y="6.075" radius="0.2" time_gap="1.0" desired_speed="1.00"/>
+        <agent x="16.450" y="7.125" radius="0.2" time_gap="1.0" desired_speed="1.00"/>
+        <agent x="17.550" y="6.075" radius="0.2" time_gap="1.0" desired_speed="1.00"/>
+        <agent x="17.550" y="7.125" radius="0.2" time_gap="1.0" desired_speed="1.00"/>
+        <agent x="18.450" y="6.075" radius="0.2" time_gap="1.0" desired_speed="1.00"/>
+        <agent x="18.450" y="7.125" radius="0.2" time_gap="1.0" desired_speed="1.00"/>
+        <agent x="19.550" y="6.075" radius="0.2" time_gap="1.0" desired_speed="1.00"/>
+        <agent x="19.550" y="7.125" radius="0.2" time_gap="1.0" desired_speed="1.00"/>
+        <agent x="20.450" y="6.075" radius="0.2" time_gap="1.0" desired_speed="1.00"/>
+        <agent x="20.450" y="7.125" radius="0.2" time_gap="1.0" desired_speed="1.00"/>
+        <agent x="21.550" y="6.075" radius="0.2" time_gap="1.0" desired_speed="1.00"/>
+        <agent x="21.550" y="7.125" radius="0.2" time_gap="1.0" desired_speed="1.00"/>
+        <agent x="0.450" y="8.875" radius="0.2" time_gap="1.0" desired_speed="1.00"/>
+        <agent x="0.450" y="9.925" radius="0.2" time_gap="1.0" desired_speed="1.00"/>
+        <agent x="1.550" y="8.875" radius="0.2" time_gap="1.0" desired_speed="1.00"/>
+        <agent x="1.550" y="9.925" radius="0.2" time_gap="1.0" desired_speed="1.00"/>
+        <agent x="2.450" y="8.875" radius="0.2" time_gap="1.0" desired_speed="1.00"/>
+        <agent x="2.450" y="9.925" radius="0.2" time_gap="1.0" desired_speed="1.00"/>
+        <agent x="3.550" y="8.875" radius="0.2" time_gap="1.0" desired_speed="1.00"/>
+        <agent x="3.550" y="9.925" radius="0.2" time_gap="1.0" desired_speed="1.00"/>
+        <agent x="4.450" y="8.875" radius="0.2" time_gap="1.0" desired_speed="1.00"/>
+        <agent x="4.450" y="9.925" radius="0.2" time_gap="1.0" desired_speed="1.00"/>
+        <agent x="5.550" y="8.875" radius="0.2" time_gap="1.0" desired_speed="1.00"/>
+        <agent x="5.550" y="9.925" radius="0.2" time_gap="1.0" desired_speed="1.00"/>
+        <agent x="6.450" y="8.875" radius="0.2" time_gap="1.0" desired_speed="1.00"/>
+        <agent x="6.450" y="9.925" radius="0.2" time_gap="1.0" desired_speed="1.00"/>
+        <agent x="7.550" y="8.875" radius="0.2" time_gap="1.0" desired_speed="1.00"/>
+        <agent x="7.550" y="9.925" radius="0.2" time_gap="1.0" desired_speed="1.00"/>
+        <agent x="8.450" y="8.875" radius="0.2" time_gap="1.0" desired_speed="1.00"/>
+        <agent x="8.450" y="9.925" radius="0.2" time_gap="1.0" desired_speed="1.00"/>
+        <agent x="9.550" y="8.875" radius="0.2" time_gap="1.0" desired_speed="1.00"/>
+        <agent x="9.550" y="9.925" radius="0.2" time_gap="1.0" desired_speed="1.00"/>
+        <agent x="10.450" y="8.875" radius="0.2" time_gap="1.0" desired_speed="1.00"/>
+        <agent x="10.450" y="9.925" radius="0.2" time_gap="1.0" desired_speed="1.00"/>
+        <agent x="11.550" y="8.875" radius="0.2" time_gap="1.0" desired_speed="1.00"/>
+        <agent x="11.550" y="9.925" radius="0.2" time_gap="1.0" desired_speed="1.00"/>
+        <agent x="12.450" y="8.875" radius="0.2" time_gap="1.0" desired_speed="1.00"/>
+        <agent x="12.450" y="9.925" radius="0.2" time_gap="1.0" desired_speed="1.00"/>
+        <agent x="13.550" y="8.875" radius="0.2" time_gap="1.0" desired_speed="1.00"/>
+        <agent x="13.550" y="9.925" radius="0.2" time_gap="1.0" desired_speed="1.00"/>
+        <agent x="14.450" y="8.875" radius="0.2" time_gap="1.0" desired_speed="1.00"/>
+        <agent x="14.450" y="9.925" radius="0.2" time_gap="1.0" desired_speed="1.00"/>
+        <agent x="15.550" y="8.875" radius="0.2" time_gap="1.0" desired_speed="1.00"/>
+        <agent x="15.550" y="9.925" radius="0.2" time_gap="1.0" desired_speed="1.00"/>
+        <agent x="16.450" y="8.875" radius="0.2" time_gap="1.0" desired_speed="1.00"/>
+        <agent x="16.450" y="9.925" radius="0.2" time_gap="1.0" desired_speed="1.00"/>
+        <agent x="17.550" y="8.875" radius="0.2" time_gap="1.0" desired_speed="1.00"/>
+        <agent x="17.550" y="9.925" radius="0.2" time_gap="1.0" desired_speed="1.00"/>
+        <agent x="18.450" y="8.875" radius="0.2" time_gap="1.0" desired_speed="1.00"/>
+        <agent x="18.450" y="9.925" radius="0.2" time_gap="1.0" desired_speed="1.00"/>
+        <agent x="19.550" y="8.875" radius="0.2" time_gap="1.0" desired_speed="1.00"/>
+        <agent x="19.550" y="9.925" radius="0.2" time_gap="1.0" desired_speed="1.00"/>
+        <agent x="20.450" y="8.875" radius="0.2" time_gap="1.0" desired_speed="1.00"/>
+        <agent x="20.450" y="9.925" radius="0.2" time_gap="1.0" desired_speed="1.00"/>
+        <agent x="21.550" y="8.875" radius="0.2" time_gap="1.0" desired_speed="1.00"/>
+        <agent x="21.550" y="9.925" radius="0.2" time_gap="1.0" desired_speed="1.00"/>
+        <agent x="0.450" y="14.075" radius="0.2" time_gap="1.0" desired_speed="1.00"/>
+        <agent x="0.450" y="15.125" radius="0.2" time_gap="1.0" desired_speed="1.00"/>
+        <agent x="1.550" y="14.075" radius="0.2" time_gap="1.0" desired_speed="1.00"/>
+        <agent x="1.550" y="15.125" radius="0.2" time_gap="1.0" desired_speed="1.00"/>
+        <agent x="2.450" y="14.075" radius="0.2" time_gap="1.0" desired_speed="1.00"/>
+        <agent x="2.450" y="15.125" radius="0.2" time_gap="1.0" desired_speed="1.00"/>
+        <agent x="3.550" y="14.075" radius="0.2" time_gap="1.0" desired_speed="1.00"/>
+        <agent x="3.550" y="15.125" radius="0.2" time_gap="1.0" desired_speed="1.00"/>
+        <agent x="4.450" y="14.075" radius="0.2" time_gap="1.0" desired_speed="1.00"/>
+        <agent x="4.450" y="15.125" radius="0.2" time_gap="1.0" desired_speed="1.00"/>
+        <agent x="5.550" y="14.075" radius="0.2" time_gap="1.0" desired_speed="1.00"/>
+        <agent x="5.550" y="15.125" radius="0.2" time_gap="1.0" desired_speed="1.00"/>
+        <agent x="6.450" y="14.075" radius="0.2" time_gap="1.0" desired_speed="1.00"/>
+        <agent x="6.450" y="15.125" radius="0.2" time_gap="1.0" desired_speed="1.00"/>
+        <agent x="7.550" y="14.075" radius="0.2" time_gap="1.0" desired_speed="1.00"/>
+        <agent x="7.550" y="15.125" radius="0.2" time_gap="1.0" desired_speed="1.00"/>
+        <agent x="8.450" y="14.075" radius="0.2" time_gap="1.0" desired_speed="1.00"/>
+        <agent x="8.450" y="15.125" radius="0.2" time_gap="1.0" desired_speed="1.00"/>
+        <agent x="9.550" y="14.075" radius="0.2" time_gap="1.0" desired_speed="1.00"/>
+        <agent x="9.550" y="15.125" radius="0.2" time_gap="1.0" desired_speed="1.00"/>
+        <agent x="10.450" y="14.075" radius="0.2" time_gap="1.0" desired_speed="1.00"/>
+        <agent x="10.450" y="15.125" radius="0.2" time_gap="1.0" desired_speed="1.00"/>
+        <agent x="11.550" y="14.075" radius="0.2" time_gap="1.0" desired_speed="1.00"/>
+        <agent x="11.550" y="15.125" radius="0.2" time_gap="1.0" desired_speed="1.00"/>
+        <agent x="12.450" y="14.075" radius="0.2" time_gap="1.0" desired_speed="1.00"/>
+        <agent x="12.450" y="15.125" radius="0.2" time_gap="1.0" desired_speed="1.00"/>
+        <agent x="13.550" y="14.075" radius="0.2" time_gap="1.0" desired_speed="1.00"/>
+        <agent x="13.550" y="15.125" radius="0.2" time_gap="1.0" desired_speed="1.00"/>
+        <agent x="14.450" y="14.075" radius="0.2" time_gap="1.0" desired_speed="1.00"/>
+        <agent x="14.450" y="15.125" radius="0.2" time_gap="1.0" desired_speed="1.00"/>
+        <agent x="15.550" y="14.075" radius="0.2" time_gap="1.0" desired_speed="1.00"/>
+        <agent x="15.550" y="15.125" radius="0.2" time_gap="1.0" desired_speed="1.00"/>
+        <agent x="16.450" y="14.075" radius="0.2" time_gap="1.0" desired_speed="1.00"/>
+        <agent x="16.450" y="15.125" radius="0.2" time_gap="1.0" desired_speed="1.00"/>
+        <agent x="17.550" y="14.075" radius="0.2" time_gap="1.0" desired_speed="1.00"/>
+        <agent x="17.550" y="15.125" radius="0.2" time_gap="1.0" desired_speed="1.00"/>
+        <agent x="18.450" y="14.075" radius="0.2" time_gap="1.0" desired_speed="1.00"/>
+        <agent x="18.450" y="15.125" radius="0.2" time_gap="1.0" desired_speed="1.00"/>
+        <agent x="19.550" y="14.075" radius="0.2" time_gap="1.0" desired_speed="1.00"/>
+        <agent x="19.550" y="15.125" radius="0.2" time_gap="1.0" desired_speed="1.00"/>
+        <agent x="20.450" y="14.075" radius="0.2" time_gap="1.0" desired_speed="1.00"/>
+        <agent x="20.450" y="15.125" radius="0.2" time_gap="1.0" desired_speed="1.00"/>
+        <agent x="21.550" y="14.075" radius="0.2" time_gap="1.0" desired_speed="1.00"/>
+        <agent x="21.550" y="15.125" radius="0.2" time_gap="1.0" desired_speed="1.00"/>
+      </agents>
+    </floor>
+    <floor id="2" flowsimpro_name="Floor 2" flowsimpro_elevation_m="6">
+      <geometry>
+      <walkable><vertex x="0" y="0"/><vertex x="26" y="0"/><vertex x="26" y="16"/><vertex x="0" y="16"/></walkable>
+      <obstacle><vertex x="0" y="2.8"/><vertex x="0.5" y="2.8"/><vertex x="0.5" y="3"/><vertex x="0" y="3"/></obstacle>
+      <obstacle><vertex x="1.5" y="2.8"/><vertex x="2" y="2.8"/><vertex x="2" y="3"/><vertex x="1.5" y="3"/></obstacle>
+      <obstacle><vertex x="2" y="2.8"/><vertex x="2.5" y="2.8"/><vertex x="2.5" y="3"/><vertex x="2" y="3"/></obstacle>
+      <obstacle><vertex x="3.5" y="2.8"/><vertex x="4" y="2.8"/><vertex x="4" y="3"/><vertex x="3.5" y="3"/></obstacle>
+      <obstacle><vertex x="1.9" y="0"/><vertex x="2.1" y="0"/><vertex x="2.1" y="3"/><vertex x="1.9" y="3"/></obstacle>
+      <obstacle><vertex x="4" y="2.8"/><vertex x="4.5" y="2.8"/><vertex x="4.5" y="3"/><vertex x="4" y="3"/></obstacle>
+      <obstacle><vertex x="5.5" y="2.8"/><vertex x="6" y="2.8"/><vertex x="6" y="3"/><vertex x="5.5" y="3"/></obstacle>
+      <obstacle><vertex x="3.9" y="0"/><vertex x="4.1" y="0"/><vertex x="4.1" y="3"/><vertex x="3.9" y="3"/></obstacle>
+      <obstacle><vertex x="6" y="2.8"/><vertex x="6.5" y="2.8"/><vertex x="6.5" y="3"/><vertex x="6" y="3"/></obstacle>
+      <obstacle><vertex x="7.5" y="2.8"/><vertex x="8" y="2.8"/><vertex x="8" y="3"/><vertex x="7.5" y="3"/></obstacle>
+      <obstacle><vertex x="5.9" y="0"/><vertex x="6.1" y="0"/><vertex x="6.1" y="3"/><vertex x="5.9" y="3"/></obstacle>
+      <obstacle><vertex x="8" y="2.8"/><vertex x="8.5" y="2.8"/><vertex x="8.5" y="3"/><vertex x="8" y="3"/></obstacle>
+      <obstacle><vertex x="9.5" y="2.8"/><vertex x="10" y="2.8"/><vertex x="10" y="3"/><vertex x="9.5" y="3"/></obstacle>
+      <obstacle><vertex x="7.9" y="0"/><vertex x="8.1" y="0"/><vertex x="8.1" y="3"/><vertex x="7.9" y="3"/></obstacle>
+      <obstacle><vertex x="10" y="2.8"/><vertex x="10.5" y="2.8"/><vertex x="10.5" y="3"/><vertex x="10" y="3"/></obstacle>
+      <obstacle><vertex x="11.5" y="2.8"/><vertex x="12" y="2.8"/><vertex x="12" y="3"/><vertex x="11.5" y="3"/></obstacle>
+      <obstacle><vertex x="9.9" y="0"/><vertex x="10.1" y="0"/><vertex x="10.1" y="3"/><vertex x="9.9" y="3"/></obstacle>
+      <obstacle><vertex x="12" y="2.8"/><vertex x="12.5" y="2.8"/><vertex x="12.5" y="3"/><vertex x="12" y="3"/></obstacle>
+      <obstacle><vertex x="13.5" y="2.8"/><vertex x="14" y="2.8"/><vertex x="14" y="3"/><vertex x="13.5" y="3"/></obstacle>
+      <obstacle><vertex x="11.9" y="0"/><vertex x="12.1" y="0"/><vertex x="12.1" y="3"/><vertex x="11.9" y="3"/></obstacle>
+      <obstacle><vertex x="14" y="2.8"/><vertex x="14.5" y="2.8"/><vertex x="14.5" y="3"/><vertex x="14" y="3"/></obstacle>
+      <obstacle><vertex x="15.5" y="2.8"/><vertex x="16" y="2.8"/><vertex x="16" y="3"/><vertex x="15.5" y="3"/></obstacle>
+      <obstacle><vertex x="13.9" y="0"/><vertex x="14.1" y="0"/><vertex x="14.1" y="3"/><vertex x="13.9" y="3"/></obstacle>
+      <obstacle><vertex x="16" y="2.8"/><vertex x="16.5" y="2.8"/><vertex x="16.5" y="3"/><vertex x="16" y="3"/></obstacle>
+      <obstacle><vertex x="17.5" y="2.8"/><vertex x="18" y="2.8"/><vertex x="18" y="3"/><vertex x="17.5" y="3"/></obstacle>
+      <obstacle><vertex x="15.9" y="0"/><vertex x="16.1" y="0"/><vertex x="16.1" y="3"/><vertex x="15.9" y="3"/></obstacle>
+      <obstacle><vertex x="18" y="2.8"/><vertex x="18.5" y="2.8"/><vertex x="18.5" y="3"/><vertex x="18" y="3"/></obstacle>
+      <obstacle><vertex x="19.5" y="2.8"/><vertex x="20" y="2.8"/><vertex x="20" y="3"/><vertex x="19.5" y="3"/></obstacle>
+      <obstacle><vertex x="17.9" y="0"/><vertex x="18.1" y="0"/><vertex x="18.1" y="3"/><vertex x="17.9" y="3"/></obstacle>
+      <obstacle><vertex x="20" y="2.8"/><vertex x="20.5" y="2.8"/><vertex x="20.5" y="3"/><vertex x="20" y="3"/></obstacle>
+      <obstacle><vertex x="21.5" y="2.8"/><vertex x="22" y="2.8"/><vertex x="22" y="3"/><vertex x="21.5" y="3"/></obstacle>
+      <obstacle><vertex x="19.9" y="0"/><vertex x="20.1" y="0"/><vertex x="20.1" y="3"/><vertex x="19.9" y="3"/></obstacle>
+      <obstacle><vertex x="0" y="5"/><vertex x="0.5" y="5"/><vertex x="0.5" y="5.2"/><vertex x="0" y="5.2"/></obstacle>
+      <obstacle><vertex x="1.5" y="5"/><vertex x="2" y="5"/><vertex x="2" y="5.2"/><vertex x="1.5" y="5.2"/></obstacle>
+      <obstacle><vertex x="2" y="5"/><vertex x="2.5" y="5"/><vertex x="2.5" y="5.2"/><vertex x="2" y="5.2"/></obstacle>
+      <obstacle><vertex x="3.5" y="5"/><vertex x="4" y="5"/><vertex x="4" y="5.2"/><vertex x="3.5" y="5.2"/></obstacle>
+      <obstacle><vertex x="1.9" y="5"/><vertex x="2.1" y="5"/><vertex x="2.1" y="8"/><vertex x="1.9" y="8"/></obstacle>
+      <obstacle><vertex x="4" y="5"/><vertex x="4.5" y="5"/><vertex x="4.5" y="5.2"/><vertex x="4" y="5.2"/></obstacle>
+      <obstacle><vertex x="5.5" y="5"/><vertex x="6" y="5"/><vertex x="6" y="5.2"/><vertex x="5.5" y="5.2"/></obstacle>
+      <obstacle><vertex x="3.9" y="5"/><vertex x="4.1" y="5"/><vertex x="4.1" y="8"/><vertex x="3.9" y="8"/></obstacle>
+      <obstacle><vertex x="6" y="5"/><vertex x="6.5" y="5"/><vertex x="6.5" y="5.2"/><vertex x="6" y="5.2"/></obstacle>
+      <obstacle><vertex x="7.5" y="5"/><vertex x="8" y="5"/><vertex x="8" y="5.2"/><vertex x="7.5" y="5.2"/></obstacle>
+      <obstacle><vertex x="5.9" y="5"/><vertex x="6.1" y="5"/><vertex x="6.1" y="8"/><vertex x="5.9" y="8"/></obstacle>
+      <obstacle><vertex x="8" y="5"/><vertex x="8.5" y="5"/><vertex x="8.5" y="5.2"/><vertex x="8" y="5.2"/></obstacle>
+      <obstacle><vertex x="9.5" y="5"/><vertex x="10" y="5"/><vertex x="10" y="5.2"/><vertex x="9.5" y="5.2"/></obstacle>
+      <obstacle><vertex x="7.9" y="5"/><vertex x="8.1" y="5"/><vertex x="8.1" y="8"/><vertex x="7.9" y="8"/></obstacle>
+      <obstacle><vertex x="10" y="5"/><vertex x="10.5" y="5"/><vertex x="10.5" y="5.2"/><vertex x="10" y="5.2"/></obstacle>
+      <obstacle><vertex x="11.5" y="5"/><vertex x="12" y="5"/><vertex x="12" y="5.2"/><vertex x="11.5" y="5.2"/></obstacle>
+      <obstacle><vertex x="9.9" y="5"/><vertex x="10.1" y="5"/><vertex x="10.1" y="8"/><vertex x="9.9" y="8"/></obstacle>
+      <obstacle><vertex x="12" y="5"/><vertex x="12.5" y="5"/><vertex x="12.5" y="5.2"/><vertex x="12" y="5.2"/></obstacle>
+      <obstacle><vertex x="13.5" y="5"/><vertex x="14" y="5"/><vertex x="14" y="5.2"/><vertex x="13.5" y="5.2"/></obstacle>
+      <obstacle><vertex x="11.9" y="5"/><vertex x="12.1" y="5"/><vertex x="12.1" y="8"/><vertex x="11.9" y="8"/></obstacle>
+      <obstacle><vertex x="14" y="5"/><vertex x="14.5" y="5"/><vertex x="14.5" y="5.2"/><vertex x="14" y="5.2"/></obstacle>
+      <obstacle><vertex x="15.5" y="5"/><vertex x="16" y="5"/><vertex x="16" y="5.2"/><vertex x="15.5" y="5.2"/></obstacle>
+      <obstacle><vertex x="13.9" y="5"/><vertex x="14.1" y="5"/><vertex x="14.1" y="8"/><vertex x="13.9" y="8"/></obstacle>
+      <obstacle><vertex x="16" y="5"/><vertex x="16.5" y="5"/><vertex x="16.5" y="5.2"/><vertex x="16" y="5.2"/></obstacle>
+      <obstacle><vertex x="17.5" y="5"/><vertex x="18" y="5"/><vertex x="18" y="5.2"/><vertex x="17.5" y="5.2"/></obstacle>
+      <obstacle><vertex x="15.9" y="5"/><vertex x="16.1" y="5"/><vertex x="16.1" y="8"/><vertex x="15.9" y="8"/></obstacle>
+      <obstacle><vertex x="18" y="5"/><vertex x="18.5" y="5"/><vertex x="18.5" y="5.2"/><vertex x="18" y="5.2"/></obstacle>
+      <obstacle><vertex x="19.5" y="5"/><vertex x="20" y="5"/><vertex x="20" y="5.2"/><vertex x="19.5" y="5.2"/></obstacle>
+      <obstacle><vertex x="17.9" y="5"/><vertex x="18.1" y="5"/><vertex x="18.1" y="8"/><vertex x="17.9" y="8"/></obstacle>
+      <obstacle><vertex x="20" y="5"/><vertex x="20.5" y="5"/><vertex x="20.5" y="5.2"/><vertex x="20" y="5.2"/></obstacle>
+      <obstacle><vertex x="21.5" y="5"/><vertex x="22" y="5"/><vertex x="22" y="5.2"/><vertex x="21.5" y="5.2"/></obstacle>
+      <obstacle><vertex x="19.9" y="5"/><vertex x="20.1" y="5"/><vertex x="20.1" y="8"/><vertex x="19.9" y="8"/></obstacle>
+      <obstacle><vertex x="0" y="10.8"/><vertex x="0.5" y="10.8"/><vertex x="0.5" y="11"/><vertex x="0" y="11"/></obstacle>
+      <obstacle><vertex x="1.5" y="10.8"/><vertex x="2" y="10.8"/><vertex x="2" y="11"/><vertex x="1.5" y="11"/></obstacle>
+      <obstacle><vertex x="2" y="10.8"/><vertex x="2.5" y="10.8"/><vertex x="2.5" y="11"/><vertex x="2" y="11"/></obstacle>
+      <obstacle><vertex x="3.5" y="10.8"/><vertex x="4" y="10.8"/><vertex x="4" y="11"/><vertex x="3.5" y="11"/></obstacle>
+      <obstacle><vertex x="1.9" y="8"/><vertex x="2.1" y="8"/><vertex x="2.1" y="11"/><vertex x="1.9" y="11"/></obstacle>
+      <obstacle><vertex x="4" y="10.8"/><vertex x="4.5" y="10.8"/><vertex x="4.5" y="11"/><vertex x="4" y="11"/></obstacle>
+      <obstacle><vertex x="5.5" y="10.8"/><vertex x="6" y="10.8"/><vertex x="6" y="11"/><vertex x="5.5" y="11"/></obstacle>
+      <obstacle><vertex x="3.9" y="8"/><vertex x="4.1" y="8"/><vertex x="4.1" y="11"/><vertex x="3.9" y="11"/></obstacle>
+      <obstacle><vertex x="6" y="10.8"/><vertex x="6.5" y="10.8"/><vertex x="6.5" y="11"/><vertex x="6" y="11"/></obstacle>
+      <obstacle><vertex x="7.5" y="10.8"/><vertex x="8" y="10.8"/><vertex x="8" y="11"/><vertex x="7.5" y="11"/></obstacle>
+      <obstacle><vertex x="5.9" y="8"/><vertex x="6.1" y="8"/><vertex x="6.1" y="11"/><vertex x="5.9" y="11"/></obstacle>
+      <obstacle><vertex x="8" y="10.8"/><vertex x="8.5" y="10.8"/><vertex x="8.5" y="11"/><vertex x="8" y="11"/></obstacle>
+      <obstacle><vertex x="9.5" y="10.8"/><vertex x="10" y="10.8"/><vertex x="10" y="11"/><vertex x="9.5" y="11"/></obstacle>
+      <obstacle><vertex x="7.9" y="8"/><vertex x="8.1" y="8"/><vertex x="8.1" y="11"/><vertex x="7.9" y="11"/></obstacle>
+      <obstacle><vertex x="10" y="10.8"/><vertex x="10.5" y="10.8"/><vertex x="10.5" y="11"/><vertex x="10" y="11"/></obstacle>
+      <obstacle><vertex x="11.5" y="10.8"/><vertex x="12" y="10.8"/><vertex x="12" y="11"/><vertex x="11.5" y="11"/></obstacle>
+      <obstacle><vertex x="9.9" y="8"/><vertex x="10.1" y="8"/><vertex x="10.1" y="11"/><vertex x="9.9" y="11"/></obstacle>
+      <obstacle><vertex x="12" y="10.8"/><vertex x="12.5" y="10.8"/><vertex x="12.5" y="11"/><vertex x="12" y="11"/></obstacle>
+      <obstacle><vertex x="13.5" y="10.8"/><vertex x="14" y="10.8"/><vertex x="14" y="11"/><vertex x="13.5" y="11"/></obstacle>
+      <obstacle><vertex x="11.9" y="8"/><vertex x="12.1" y="8"/><vertex x="12.1" y="11"/><vertex x="11.9" y="11"/></obstacle>
+      <obstacle><vertex x="14" y="10.8"/><vertex x="14.5" y="10.8"/><vertex x="14.5" y="11"/><vertex x="14" y="11"/></obstacle>
+      <obstacle><vertex x="15.5" y="10.8"/><vertex x="16" y="10.8"/><vertex x="16" y="11"/><vertex x="15.5" y="11"/></obstacle>
+      <obstacle><vertex x="13.9" y="8"/><vertex x="14.1" y="8"/><vertex x="14.1" y="11"/><vertex x="13.9" y="11"/></obstacle>
+      <obstacle><vertex x="16" y="10.8"/><vertex x="16.5" y="10.8"/><vertex x="16.5" y="11"/><vertex x="16" y="11"/></obstacle>
+      <obstacle><vertex x="17.5" y="10.8"/><vertex x="18" y="10.8"/><vertex x="18" y="11"/><vertex x="17.5" y="11"/></obstacle>
+      <obstacle><vertex x="15.9" y="8"/><vertex x="16.1" y="8"/><vertex x="16.1" y="11"/><vertex x="15.9" y="11"/></obstacle>
+      <obstacle><vertex x="18" y="10.8"/><vertex x="18.5" y="10.8"/><vertex x="18.5" y="11"/><vertex x="18" y="11"/></obstacle>
+      <obstacle><vertex x="19.5" y="10.8"/><vertex x="20" y="10.8"/><vertex x="20" y="11"/><vertex x="19.5" y="11"/></obstacle>
+      <obstacle><vertex x="17.9" y="8"/><vertex x="18.1" y="8"/><vertex x="18.1" y="11"/><vertex x="17.9" y="11"/></obstacle>
+      <obstacle><vertex x="20" y="10.8"/><vertex x="20.5" y="10.8"/><vertex x="20.5" y="11"/><vertex x="20" y="11"/></obstacle>
+      <obstacle><vertex x="21.5" y="10.8"/><vertex x="22" y="10.8"/><vertex x="22" y="11"/><vertex x="21.5" y="11"/></obstacle>
+      <obstacle><vertex x="19.9" y="8"/><vertex x="20.1" y="8"/><vertex x="20.1" y="11"/><vertex x="19.9" y="11"/></obstacle>
+      <obstacle><vertex x="0" y="13"/><vertex x="0.5" y="13"/><vertex x="0.5" y="13.2"/><vertex x="0" y="13.2"/></obstacle>
+      <obstacle><vertex x="1.5" y="13"/><vertex x="2" y="13"/><vertex x="2" y="13.2"/><vertex x="1.5" y="13.2"/></obstacle>
+      <obstacle><vertex x="2" y="13"/><vertex x="2.5" y="13"/><vertex x="2.5" y="13.2"/><vertex x="2" y="13.2"/></obstacle>
+      <obstacle><vertex x="3.5" y="13"/><vertex x="4" y="13"/><vertex x="4" y="13.2"/><vertex x="3.5" y="13.2"/></obstacle>
+      <obstacle><vertex x="1.9" y="13"/><vertex x="2.1" y="13"/><vertex x="2.1" y="16"/><vertex x="1.9" y="16"/></obstacle>
+      <obstacle><vertex x="4" y="13"/><vertex x="4.5" y="13"/><vertex x="4.5" y="13.2"/><vertex x="4" y="13.2"/></obstacle>
+      <obstacle><vertex x="5.5" y="13"/><vertex x="6" y="13"/><vertex x="6" y="13.2"/><vertex x="5.5" y="13.2"/></obstacle>
+      <obstacle><vertex x="3.9" y="13"/><vertex x="4.1" y="13"/><vertex x="4.1" y="16"/><vertex x="3.9" y="16"/></obstacle>
+      <obstacle><vertex x="6" y="13"/><vertex x="6.5" y="13"/><vertex x="6.5" y="13.2"/><vertex x="6" y="13.2"/></obstacle>
+      <obstacle><vertex x="7.5" y="13"/><vertex x="8" y="13"/><vertex x="8" y="13.2"/><vertex x="7.5" y="13.2"/></obstacle>
+      <obstacle><vertex x="5.9" y="13"/><vertex x="6.1" y="13"/><vertex x="6.1" y="16"/><vertex x="5.9" y="16"/></obstacle>
+      <obstacle><vertex x="8" y="13"/><vertex x="8.5" y="13"/><vertex x="8.5" y="13.2"/><vertex x="8" y="13.2"/></obstacle>
+      <obstacle><vertex x="9.5" y="13"/><vertex x="10" y="13"/><vertex x="10" y="13.2"/><vertex x="9.5" y="13.2"/></obstacle>
+      <obstacle><vertex x="7.9" y="13"/><vertex x="8.1" y="13"/><vertex x="8.1" y="16"/><vertex x="7.9" y="16"/></obstacle>
+      <obstacle><vertex x="10" y="13"/><vertex x="10.5" y="13"/><vertex x="10.5" y="13.2"/><vertex x="10" y="13.2"/></obstacle>
+      <obstacle><vertex x="11.5" y="13"/><vertex x="12" y="13"/><vertex x="12" y="13.2"/><vertex x="11.5" y="13.2"/></obstacle>
+      <obstacle><vertex x="9.9" y="13"/><vertex x="10.1" y="13"/><vertex x="10.1" y="16"/><vertex x="9.9" y="16"/></obstacle>
+      <obstacle><vertex x="12" y="13"/><vertex x="12.5" y="13"/><vertex x="12.5" y="13.2"/><vertex x="12" y="13.2"/></obstacle>
+      <obstacle><vertex x="13.5" y="13"/><vertex x="14" y="13"/><vertex x="14" y="13.2"/><vertex x="13.5" y="13.2"/></obstacle>
+      <obstacle><vertex x="11.9" y="13"/><vertex x="12.1" y="13"/><vertex x="12.1" y="16"/><vertex x="11.9" y="16"/></obstacle>
+      <obstacle><vertex x="14" y="13"/><vertex x="14.5" y="13"/><vertex x="14.5" y="13.2"/><vertex x="14" y="13.2"/></obstacle>
+      <obstacle><vertex x="15.5" y="13"/><vertex x="16" y="13"/><vertex x="16" y="13.2"/><vertex x="15.5" y="13.2"/></obstacle>
+      <obstacle><vertex x="13.9" y="13"/><vertex x="14.1" y="13"/><vertex x="14.1" y="16"/><vertex x="13.9" y="16"/></obstacle>
+      <obstacle><vertex x="16" y="13"/><vertex x="16.5" y="13"/><vertex x="16.5" y="13.2"/><vertex x="16" y="13.2"/></obstacle>
+      <obstacle><vertex x="17.5" y="13"/><vertex x="18" y="13"/><vertex x="18" y="13.2"/><vertex x="17.5" y="13.2"/></obstacle>
+      <obstacle><vertex x="15.9" y="13"/><vertex x="16.1" y="13"/><vertex x="16.1" y="16"/><vertex x="15.9" y="16"/></obstacle>
+      <obstacle><vertex x="18" y="13"/><vertex x="18.5" y="13"/><vertex x="18.5" y="13.2"/><vertex x="18" y="13.2"/></obstacle>
+      <obstacle><vertex x="19.5" y="13"/><vertex x="20" y="13"/><vertex x="20" y="13.2"/><vertex x="19.5" y="13.2"/></obstacle>
+      <obstacle><vertex x="17.9" y="13"/><vertex x="18.1" y="13"/><vertex x="18.1" y="16"/><vertex x="17.9" y="16"/></obstacle>
+      <obstacle><vertex x="20" y="13"/><vertex x="20.5" y="13"/><vertex x="20.5" y="13.2"/><vertex x="20" y="13.2"/></obstacle>
+      <obstacle><vertex x="21.5" y="13"/><vertex x="22" y="13"/><vertex x="22" y="13.2"/><vertex x="21.5" y="13.2"/></obstacle>
+      <obstacle><vertex x="19.9" y="13"/><vertex x="20.1" y="13"/><vertex x="20.1" y="16"/><vertex x="19.9" y="16"/></obstacle>
+      <obstacle><vertex x="22" y="0"/><vertex x="22.2" y="0"/><vertex x="22.2" y="3"/><vertex x="22" y="3"/></obstacle>
+      <obstacle><vertex x="22" y="5"/><vertex x="22.2" y="5"/><vertex x="22.2" y="11"/><vertex x="22" y="11"/></obstacle>
+      <obstacle><vertex x="22" y="13"/><vertex x="22.2" y="13"/><vertex x="22.2" y="16"/><vertex x="22" y="16"/></obstacle>
+      </geometry>
+      <!-- The head of the stairway down. It holds the <stair>
+           entrance, which is how the solver tells it from a way out. -->
+      <exit><vertex x="22.2" y="3"/><vertex x="26" y="3"/><vertex x="26" y="11"/><vertex x="22.2" y="11"/></exit>
+      <agents>
+        <agent x="0.450" y="0.875" radius="0.2" time_gap="1.0" desired_speed="1.00"/>
+        <agent x="0.450" y="1.925" radius="0.2" time_gap="1.0" desired_speed="1.00"/>
+        <agent x="1.550" y="0.875" radius="0.2" time_gap="1.0" desired_speed="1.00"/>
+        <agent x="1.550" y="1.925" radius="0.2" time_gap="1.0" desired_speed="1.00"/>
+        <agent x="2.450" y="0.875" radius="0.2" time_gap="1.0" desired_speed="1.00"/>
+        <agent x="2.450" y="1.925" radius="0.2" time_gap="1.0" desired_speed="1.00"/>
+        <agent x="3.550" y="0.875" radius="0.2" time_gap="1.0" desired_speed="1.00"/>
+        <agent x="3.550" y="1.925" radius="0.2" time_gap="1.0" desired_speed="1.00"/>
+        <agent x="4.450" y="0.875" radius="0.2" time_gap="1.0" desired_speed="1.00"/>
+        <agent x="4.450" y="1.925" radius="0.2" time_gap="1.0" desired_speed="1.00"/>
+        <agent x="5.550" y="0.875" radius="0.2" time_gap="1.0" desired_speed="1.00"/>
+        <agent x="5.550" y="1.925" radius="0.2" time_gap="1.0" desired_speed="1.00"/>
+        <agent x="6.450" y="0.875" radius="0.2" time_gap="1.0" desired_speed="1.00"/>
+        <agent x="6.450" y="1.925" radius="0.2" time_gap="1.0" desired_speed="1.00"/>
+        <agent x="7.550" y="0.875" radius="0.2" time_gap="1.0" desired_speed="1.00"/>
+        <agent x="7.550" y="1.925" radius="0.2" time_gap="1.0" desired_speed="1.00"/>
+        <agent x="8.450" y="0.875" radius="0.2" time_gap="1.0" desired_speed="1.00"/>
+        <agent x="8.450" y="1.925" radius="0.2" time_gap="1.0" desired_speed="1.00"/>
+        <agent x="9.550" y="0.875" radius="0.2" time_gap="1.0" desired_speed="1.00"/>
+        <agent x="9.550" y="1.925" radius="0.2" time_gap="1.0" desired_speed="1.00"/>
+        <agent x="10.450" y="0.875" radius="0.2" time_gap="1.0" desired_speed="1.00"/>
+        <agent x="10.450" y="1.925" radius="0.2" time_gap="1.0" desired_speed="1.00"/>
+        <agent x="11.550" y="0.875" radius="0.2" time_gap="1.0" desired_speed="1.00"/>
+        <agent x="11.550" y="1.925" radius="0.2" time_gap="1.0" desired_speed="1.00"/>
+        <agent x="12.450" y="0.875" radius="0.2" time_gap="1.0" desired_speed="1.00"/>
+        <agent x="12.450" y="1.925" radius="0.2" time_gap="1.0" desired_speed="1.00"/>
+        <agent x="13.550" y="0.875" radius="0.2" time_gap="1.0" desired_speed="1.00"/>
+        <agent x="13.550" y="1.925" radius="0.2" time_gap="1.0" desired_speed="1.00"/>
+        <agent x="14.450" y="0.875" radius="0.2" time_gap="1.0" desired_speed="1.00"/>
+        <agent x="14.450" y="1.925" radius="0.2" time_gap="1.0" desired_speed="1.00"/>
+        <agent x="15.550" y="0.875" radius="0.2" time_gap="1.0" desired_speed="1.00"/>
+        <agent x="15.550" y="1.925" radius="0.2" time_gap="1.0" desired_speed="1.00"/>
+        <agent x="16.450" y="0.875" radius="0.2" time_gap="1.0" desired_speed="1.00"/>
+        <agent x="16.450" y="1.925" radius="0.2" time_gap="1.0" desired_speed="1.00"/>
+        <agent x="17.550" y="0.875" radius="0.2" time_gap="1.0" desired_speed="1.00"/>
+        <agent x="17.550" y="1.925" radius="0.2" time_gap="1.0" desired_speed="1.00"/>
+        <agent x="18.450" y="0.875" radius="0.2" time_gap="1.0" desired_speed="1.00"/>
+        <agent x="18.450" y="1.925" radius="0.2" time_gap="1.0" desired_speed="1.00"/>
+        <agent x="19.550" y="0.875" radius="0.2" time_gap="1.0" desired_speed="1.00"/>
+        <agent x="19.550" y="1.925" radius="0.2" time_gap="1.0" desired_speed="1.00"/>
+        <agent x="20.450" y="0.875" radius="0.2" time_gap="1.0" desired_speed="1.00"/>
+        <agent x="20.450" y="1.925" radius="0.2" time_gap="1.0" desired_speed="1.00"/>
+        <agent x="21.550" y="0.875" radius="0.2" time_gap="1.0" desired_speed="1.00"/>
+        <agent x="21.550" y="1.925" radius="0.2" time_gap="1.0" desired_speed="1.00"/>
+        <agent x="0.450" y="6.075" radius="0.2" time_gap="1.0" desired_speed="1.00"/>
+        <agent x="0.450" y="7.125" radius="0.2" time_gap="1.0" desired_speed="1.00"/>
+        <agent x="1.550" y="6.075" radius="0.2" time_gap="1.0" desired_speed="1.00"/>
+        <agent x="1.550" y="7.125" radius="0.2" time_gap="1.0" desired_speed="1.00"/>
+        <agent x="2.450" y="6.075" radius="0.2" time_gap="1.0" desired_speed="1.00"/>
+        <agent x="2.450" y="7.125" radius="0.2" time_gap="1.0" desired_speed="1.00"/>
+        <agent x="3.550" y="6.075" radius="0.2" time_gap="1.0" desired_speed="1.00"/>
+        <agent x="3.550" y="7.125" radius="0.2" time_gap="1.0" desired_speed="1.00"/>
+        <agent x="4.450" y="6.075" radius="0.2" time_gap="1.0" desired_speed="1.00"/>
+        <agent x="4.450" y="7.125" radius="0.2" time_gap="1.0" desired_speed="1.00"/>
+        <agent x="5.550" y="6.075" radius="0.2" time_gap="1.0" desired_speed="1.00"/>
+        <agent x="5.550" y="7.125" radius="0.2" time_gap="1.0" desired_speed="1.00"/>
+        <agent x="6.450" y="6.075" radius="0.2" time_gap="1.0" desired_speed="1.00"/>
+        <agent x="6.450" y="7.125" radius="0.2" time_gap="1.0" desired_speed="1.00"/>
+        <agent x="7.550" y="6.075" radius="0.2" time_gap="1.0" desired_speed="1.00"/>
+        <agent x="7.550" y="7.125" radius="0.2" time_gap="1.0" desired_speed="1.00"/>
+        <agent x="8.450" y="6.075" radius="0.2" time_gap="1.0" desired_speed="1.00"/>
+        <agent x="8.450" y="7.125" radius="0.2" time_gap="1.0" desired_speed="1.00"/>
+        <agent x="9.550" y="6.075" radius="0.2" time_gap="1.0" desired_speed="1.00"/>
+        <agent x="9.550" y="7.125" radius="0.2" time_gap="1.0" desired_speed="1.00"/>
+        <agent x="10.450" y="6.075" radius="0.2" time_gap="1.0" desired_speed="1.00"/>
+        <agent x="10.450" y="7.125" radius="0.2" time_gap="1.0" desired_speed="1.00"/>
+        <agent x="11.550" y="6.075" radius="0.2" time_gap="1.0" desired_speed="1.00"/>
+        <agent x="11.550" y="7.125" radius="0.2" time_gap="1.0" desired_speed="1.00"/>
+        <agent x="12.450" y="6.075" radius="0.2" time_gap="1.0" desired_speed="1.00"/>
+        <agent x="12.450" y="7.125" radius="0.2" time_gap="1.0" desired_speed="1.00"/>
+        <agent x="13.550" y="6.075" radius="0.2" time_gap="1.0" desired_speed="1.00"/>
+        <agent x="13.550" y="7.125" radius="0.2" time_gap="1.0" desired_speed="1.00"/>
+        <agent x="14.450" y="6.075" radius="0.2" time_gap="1.0" desired_speed="1.00"/>
+        <agent x="14.450" y="7.125" radius="0.2" time_gap="1.0" desired_speed="1.00"/>
+        <agent x="15.550" y="6.075" radius="0.2" time_gap="1.0" desired_speed="1.00"/>
+        <agent x="15.550" y="7.125" radius="0.2" time_gap="1.0" desired_speed="1.00"/>
+        <agent x="16.450" y="6.075" radius="0.2" time_gap="1.0" desired_speed="1.00"/>
+        <agent x="16.450" y="7.125" radius="0.2" time_gap="1.0" desired_speed="1.00"/>
+        <agent x="17.550" y="6.075" radius="0.2" time_gap="1.0" desired_speed="1.00"/>
+        <agent x="17.550" y="7.125" radius="0.2" time_gap="1.0" desired_speed="1.00"/>
+        <agent x="18.450" y="6.075" radius="0.2" time_gap="1.0" desired_speed="1.00"/>
+        <agent x="18.450" y="7.125" radius="0.2" time_gap="1.0" desired_speed="1.00"/>
+        <agent x="19.550" y="6.075" radius="0.2" time_gap="1.0" desired_speed="1.00"/>
+        <agent x="19.550" y="7.125" radius="0.2" time_gap="1.0" desired_speed="1.00"/>
+        <agent x="20.450" y="6.075" radius="0.2" time_gap="1.0" desired_speed="1.00"/>
+        <agent x="20.450" y="7.125" radius="0.2" time_gap="1.0" desired_speed="1.00"/>
+        <agent x="21.550" y="6.075" radius="0.2" time_gap="1.0" desired_speed="1.00"/>
+        <agent x="21.550" y="7.125" radius="0.2" time_gap="1.0" desired_speed="1.00"/>
+        <agent x="0.450" y="8.875" radius="0.2" time_gap="1.0" desired_speed="1.00"/>
+        <agent x="0.450" y="9.925" radius="0.2" time_gap="1.0" desired_speed="1.00"/>
+        <agent x="1.550" y="8.875" radius="0.2" time_gap="1.0" desired_speed="1.00"/>
+        <agent x="1.550" y="9.925" radius="0.2" time_gap="1.0" desired_speed="1.00"/>
+        <agent x="2.450" y="8.875" radius="0.2" time_gap="1.0" desired_speed="1.00"/>
+        <agent x="2.450" y="9.925" radius="0.2" time_gap="1.0" desired_speed="1.00"/>
+        <agent x="3.550" y="8.875" radius="0.2" time_gap="1.0" desired_speed="1.00"/>
+        <agent x="3.550" y="9.925" radius="0.2" time_gap="1.0" desired_speed="1.00"/>
+        <agent x="4.450" y="8.875" radius="0.2" time_gap="1.0" desired_speed="1.00"/>
+        <agent x="4.450" y="9.925" radius="0.2" time_gap="1.0" desired_speed="1.00"/>
+        <agent x="5.550" y="8.875" radius="0.2" time_gap="1.0" desired_speed="1.00"/>
+        <agent x="5.550" y="9.925" radius="0.2" time_gap="1.0" desired_speed="1.00"/>
+        <agent x="6.450" y="8.875" radius="0.2" time_gap="1.0" desired_speed="1.00"/>
+        <agent x="6.450" y="9.925" radius="0.2" time_gap="1.0" desired_speed="1.00"/>
+        <agent x="7.550" y="8.875" radius="0.2" time_gap="1.0" desired_speed="1.00"/>
+        <agent x="7.550" y="9.925" radius="0.2" time_gap="1.0" desired_speed="1.00"/>
+        <agent x="8.450" y="8.875" radius="0.2" time_gap="1.0" desired_speed="1.00"/>
+        <agent x="8.450" y="9.925" radius="0.2" time_gap="1.0" desired_speed="1.00"/>
+        <agent x="9.550" y="8.875" radius="0.2" time_gap="1.0" desired_speed="1.00"/>
+        <agent x="9.550" y="9.925" radius="0.2" time_gap="1.0" desired_speed="1.00"/>
+        <agent x="10.450" y="8.875" radius="0.2" time_gap="1.0" desired_speed="1.00"/>
+        <agent x="10.450" y="9.925" radius="0.2" time_gap="1.0" desired_speed="1.00"/>
+        <agent x="11.550" y="8.875" radius="0.2" time_gap="1.0" desired_speed="1.00"/>
+        <agent x="11.550" y="9.925" radius="0.2" time_gap="1.0" desired_speed="1.00"/>
+        <agent x="12.450" y="8.875" radius="0.2" time_gap="1.0" desired_speed="1.00"/>
+        <agent x="12.450" y="9.925" radius="0.2" time_gap="1.0" desired_speed="1.00"/>
+        <agent x="13.550" y="8.875" radius="0.2" time_gap="1.0" desired_speed="1.00"/>
+        <agent x="13.550" y="9.925" radius="0.2" time_gap="1.0" desired_speed="1.00"/>
+        <agent x="14.450" y="8.875" radius="0.2" time_gap="1.0" desired_speed="1.00"/>
+        <agent x="14.450" y="9.925" radius="0.2" time_gap="1.0" desired_speed="1.00"/>
+        <agent x="15.550" y="8.875" radius="0.2" time_gap="1.0" desired_speed="1.00"/>
+        <agent x="15.550" y="9.925" radius="0.2" time_gap="1.0" desired_speed="1.00"/>
+        <agent x="16.450" y="8.875" radius="0.2" time_gap="1.0" desired_speed="1.00"/>
+        <agent x="16.450" y="9.925" radius="0.2" time_gap="1.0" desired_speed="1.00"/>
+        <agent x="17.550" y="8.875" radius="0.2" time_gap="1.0" desired_speed="1.00"/>
+        <agent x="17.550" y="9.925" radius="0.2" time_gap="1.0" desired_speed="1.00"/>
+        <agent x="18.450" y="8.875" radius="0.2" time_gap="1.0" desired_speed="1.00"/>
+        <agent x="18.450" y="9.925" radius="0.2" time_gap="1.0" desired_speed="1.00"/>
+        <agent x="19.550" y="8.875" radius="0.2" time_gap="1.0" desired_speed="1.00"/>
+        <agent x="19.550" y="9.925" radius="0.2" time_gap="1.0" desired_speed="1.00"/>
+        <agent x="20.450" y="8.875" radius="0.2" time_gap="1.0" desired_speed="1.00"/>
+        <agent x="20.450" y="9.925" radius="0.2" time_gap="1.0" desired_speed="1.00"/>
+        <agent x="21.550" y="8.875" radius="0.2" time_gap="1.0" desired_speed="1.00"/>
+        <agent x="21.550" y="9.925" radius="0.2" time_gap="1.0" desired_speed="1.00"/>
+        <agent x="0.450" y="14.075" radius="0.2" time_gap="1.0" desired_speed="1.00"/>
+        <agent x="0.450" y="15.125" radius="0.2" time_gap="1.0" desired_speed="1.00"/>
+        <agent x="1.550" y="14.075" radius="0.2" time_gap="1.0" desired_speed="1.00"/>
+        <agent x="1.550" y="15.125" radius="0.2" time_gap="1.0" desired_speed="1.00"/>
+        <agent x="2.450" y="14.075" radius="0.2" time_gap="1.0" desired_speed="1.00"/>
+        <agent x="2.450" y="15.125" radius="0.2" time_gap="1.0" desired_speed="1.00"/>
+        <agent x="3.550" y="14.075" radius="0.2" time_gap="1.0" desired_speed="1.00"/>
+        <agent x="3.550" y="15.125" radius="0.2" time_gap="1.0" desired_speed="1.00"/>
+        <agent x="4.450" y="14.075" radius="0.2" time_gap="1.0" desired_speed="1.00"/>
+        <agent x="4.450" y="15.125" radius="0.2" time_gap="1.0" desired_speed="1.00"/>
+        <agent x="5.550" y="14.075" radius="0.2" time_gap="1.0" desired_speed="1.00"/>
+        <agent x="5.550" y="15.125" radius="0.2" time_gap="1.0" desired_speed="1.00"/>
+        <agent x="6.450" y="14.075" radius="0.2" time_gap="1.0" desired_speed="1.00"/>
+        <agent x="6.450" y="15.125" radius="0.2" time_gap="1.0" desired_speed="1.00"/>
+        <agent x="7.550" y="14.075" radius="0.2" time_gap="1.0" desired_speed="1.00"/>
+        <agent x="7.550" y="15.125" radius="0.2" time_gap="1.0" desired_speed="1.00"/>
+        <agent x="8.450" y="14.075" radius="0.2" time_gap="1.0" desired_speed="1.00"/>
+        <agent x="8.450" y="15.125" radius="0.2" time_gap="1.0" desired_speed="1.00"/>
+        <agent x="9.550" y="14.075" radius="0.2" time_gap="1.0" desired_speed="1.00"/>
+        <agent x="9.550" y="15.125" radius="0.2" time_gap="1.0" desired_speed="1.00"/>
+        <agent x="10.450" y="14.075" radius="0.2" time_gap="1.0" desired_speed="1.00"/>
+        <agent x="10.450" y="15.125" radius="0.2" time_gap="1.0" desired_speed="1.00"/>
+        <agent x="11.550" y="14.075" radius="0.2" time_gap="1.0" desired_speed="1.00"/>
+        <agent x="11.550" y="15.125" radius="0.2" time_gap="1.0" desired_speed="1.00"/>
+        <agent x="12.450" y="14.075" radius="0.2" time_gap="1.0" desired_speed="1.00"/>
+        <agent x="12.450" y="15.125" radius="0.2" time_gap="1.0" desired_speed="1.00"/>
+        <agent x="13.550" y="14.075" radius="0.2" time_gap="1.0" desired_speed="1.00"/>
+        <agent x="13.550" y="15.125" radius="0.2" time_gap="1.0" desired_speed="1.00"/>
+        <agent x="14.450" y="14.075" radius="0.2" time_gap="1.0" desired_speed="1.00"/>
+        <agent x="14.450" y="15.125" radius="0.2" time_gap="1.0" desired_speed="1.00"/>
+        <agent x="15.550" y="14.075" radius="0.2" time_gap="1.0" desired_speed="1.00"/>
+        <agent x="15.550" y="15.125" radius="0.2" time_gap="1.0" desired_speed="1.00"/>
+        <agent x="16.450" y="14.075" radius="0.2" time_gap="1.0" desired_speed="1.00"/>
+        <agent x="16.450" y="15.125" radius="0.2" time_gap="1.0" desired_speed="1.00"/>
+        <agent x="17.550" y="14.075" radius="0.2" time_gap="1.0" desired_speed="1.00"/>
+        <agent x="17.550" y="15.125" radius="0.2" time_gap="1.0" desired_speed="1.00"/>
+        <agent x="18.450" y="14.075" radius="0.2" time_gap="1.0" desired_speed="1.00"/>
+        <agent x="18.450" y="15.125" radius="0.2" time_gap="1.0" desired_speed="1.00"/>
+        <agent x="19.550" y="14.075" radius="0.2" time_gap="1.0" desired_speed="1.00"/>
+        <agent x="19.550" y="15.125" radius="0.2" time_gap="1.0" desired_speed="1.00"/>
+        <agent x="20.450" y="14.075" radius="0.2" time_gap="1.0" desired_speed="1.00"/>
+        <agent x="20.450" y="15.125" radius="0.2" time_gap="1.0" desired_speed="1.00"/>
+        <agent x="21.550" y="14.075" radius="0.2" time_gap="1.0" desired_speed="1.00"/>
+        <agent x="21.550" y="15.125" radius="0.2" time_gap="1.0" desired_speed="1.00"/>
+      </agents>
+    </floor>
+  </floors>
+  <!-- One shaft on the right, entered from either corridor. length is left out
+       so the solver applies DIN 18009-2 Annex E: three times the height. -->
+  <connections>
+    <stair from_floor="2" to_floor="1" x="23.15" y="11" exit_x="23.15" exit_y="11"
+           end_x="23.15" end_y="3" width="1.90" distance="1.90" speed_factor="0.6"/>
+    <stair from_floor="1" to_floor="0" x="23.15" y="11" exit_x="23.15" exit_y="11"
+           end_x="23.15" end_y="3" width="1.90" distance="1.90" speed_factor="0.6"/>
+  </connections>
+</scenario>

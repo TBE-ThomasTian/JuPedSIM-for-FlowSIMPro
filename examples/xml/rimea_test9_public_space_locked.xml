@@ -1,0 +1,65 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- RiMEA 4.1.1 Test 9, Abb. 8: a crowd leaving a large public space.
+     "Ein oeffentlicher Raum mit vier Ausgaengen und 1.000 gleichfoermig in dem
+     Raum verteilten Personen. Waehle eine Population von erwachsenen Personen
+     aus Abb. 3 mit sofortiger Reaktion [...]
+     Schritt 1: Zeichne die Zeit auf, zu der die letzte Person den Raum verlaesst.
+     Schritt 2: Tuer 1 und Tuer 2 werden versperrt und Schritt 1 wird wiederholt.
+     Das erwartete Ergebnis ist eine ungefaehre Verdopplung der Zeit."
+
+     This is step 2: doors 1 and 2 locked. Step 1 is
+     rimea_test9_public_space.xml. A locked door is a wall, not an exit nobody
+     uses, so the top wall simply runs through.
+
+     The doubling is NOT a pass criterion, and the guideline says so itself in
+     the footnote to this test: "Solange in dieser Frage keine Entscheidung [...]
+     getroffen werden kann, sollte Test 9 nicht im Sinne eines
+     Ausschlusskriteriums [verwendet werden], sondern nur das Modellverhalten
+     dokumentieren." The reason given is that a bigger crowd in front of the
+     remaining doors raises the density there, which can lower the flow. So the
+     check that goes with these two files asserts only the direction - locking
+     two doors must take longer, and everybody must still get out - and prints
+     the factor for the record. -->
+<scenario dt="0.05" max_iterations="20000">
+  <geometry>
+    <walkable>
+      <vertex x="0" y="0"/><vertex x="30" y="0"/>
+      <vertex x="30" y="20.5"/><vertex x="0" y="20.5"/>
+    </walkable>
+    <!-- Top wall, unbroken: doors 1 and 2 are locked. -->
+    <obstacle>
+      <vertex x="0" y="20"/><vertex x="30" y="20"/>
+      <vertex x="30" y="20.5"/><vertex x="0" y="20.5"/>
+    </obstacle>
+  </geometry>
+
+  <decision x="15.0" y="10.0" distance="80.0"/>
+  <exits mode="adaptive" expected_time_weight="1.0" density_weight="1.0"
+         queue_weight="0.0" switch_penalty="0.0" decision_interval="1"
+         reconsideration_threshold="0.0">
+    <!-- Doors 3 and 4 in the bottom wall are all that is left. -->
+    <exit>
+      <vertex x="4" y="0"/><vertex x="5" y="0"/>
+      <vertex x="5" y="0.5"/><vertex x="4" y="0.5"/>
+    </exit>
+    <exit>
+      <vertex x="25" y="0"/><vertex x="26" y="0"/>
+      <vertex x="26" y="0.5"/><vertex x="25" y="0.5"/>
+    </exit>
+  </exits>
+
+  <agents>
+    <distribution mode="in_rectangles_by_number" distance_to_agents="0.45"
+                  distance_to_polygon="0.2" seed="9">
+      <zone min_x="0.5" min_y="1.0" max_x="29.5" max_y="19.5" number_of_agents="1000"/>
+      <population age_mean="35" age_sigma="10" age_min="20" age_max="60"
+                  female_share="0.5" male_speed_bonus="0.109" speed_sigma_percent="19.3">
+        <speed age="20" v="1.61"/>
+        <speed age="30" v="1.54"/>
+        <speed age="40" v="1.48"/>
+        <speed age="50" v="1.41"/>
+        <speed age="60" v="1.27"/>
+      </population>
+    </distribution>
+  </agents>
+</scenario>
