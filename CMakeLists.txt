@@ -320,25 +320,40 @@ if(BUILD_INSTALLER)
             PATTERN "*.xml"
             PATTERN "*.md"
     )
+    # SOURCE.txt names where the corresponding source is published, which
+    # LGPLv3 obliges whoever conveys the binary to make available. It belongs in
+    # every package, not only in the Windows installer.
     install(FILES
             ${CMAKE_SOURCE_DIR}/LICENSE
             ${CMAKE_SOURCE_DIR}/README.md
+            ${CMAKE_SOURCE_DIR}/SOURCE.txt
         DESTINATION share/jupedsim
     )
 
     # Year-based release number of the add-on, independent of the upstream
-    # JuPedSim version in project(JuPedSim VERSION ...).
-    set(FLOWSIMPRO_ADDON_VERSION "2026" CACHE STRING
+    # JuPedSim version in project(JuPedSim VERSION ...). MAJOR is the year,
+    # MINOR the release within it, PATCH a corrected build - a bare year cannot
+    # express the last one, and the installer upgrades in place, so there would
+    # be no way to tell two builds apart afterwards.
+    # Keep in sync with MyAppVersion in scripts/installer/flowsimpro-evac-addon.iss.
+    set(FLOWSIMPRO_ADDON_VERSION "2026.1.0" CACHE STRING
         "Version stamped into the add-on installer")
+
+    if(NOT FLOWSIMPRO_ADDON_VERSION MATCHES "^([0-9]+)\\.([0-9]+)\\.([0-9]+)$")
+        message(FATAL_ERROR
+            "FLOWSIMPRO_ADDON_VERSION must be MAJOR.MINOR.PATCH, got "
+            "'${FLOWSIMPRO_ADDON_VERSION}'")
+    endif()
 
     set(CPACK_PACKAGE_NAME "flowsimpro-evac-addon")
     set(CPACK_PACKAGE_VERSION "${FLOWSIMPRO_ADDON_VERSION}")
     # Without these CPack falls back to the project() version (2.0.0) for the
     # component variables, so generators that read them would disagree with
-    # CPACK_PACKAGE_VERSION.
-    set(CPACK_PACKAGE_VERSION_MAJOR "${FLOWSIMPRO_ADDON_VERSION}")
-    set(CPACK_PACKAGE_VERSION_MINOR "0")
-    set(CPACK_PACKAGE_VERSION_PATCH "0")
+    # CPACK_PACKAGE_VERSION. Split rather than hardcoded: assigning the whole
+    # string to MAJOR is what produced malformed DEB/RPM versions.
+    set(CPACK_PACKAGE_VERSION_MAJOR "${CMAKE_MATCH_1}")
+    set(CPACK_PACKAGE_VERSION_MINOR "${CMAKE_MATCH_2}")
+    set(CPACK_PACKAGE_VERSION_PATCH "${CMAKE_MATCH_3}")
     set(CPACK_PACKAGE_VENDOR "FlowSIM Pro")
     set(CPACK_PACKAGE_DESCRIPTION_SUMMARY
         "FlowSIM Pro Evac Add-On - JuPedSim evacuation solver")

@@ -35,6 +35,10 @@ examples/xml/*.jsp
 /compile_commands.json
 
 .idea/
+
+# Qt Creator per-user project settings, rewritten on every session
+.qtcreator/
+
 /build*
 
 # DIN standards are licensed per seat and must never be committed. The copy in

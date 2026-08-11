@@ -1,0 +1,24 @@
+Corresponding source
+====================
+
+This product includes JuPedSim, which is licensed under the GNU Lesser General
+Public License version 3 or later. See LICENSE.
+
+The complete corresponding source code for the jupedsim binary shipped here,
+including the modifications made for FlowSIM Pro, is published at
+
+    https://github.com/TBE-ThomasTian/JuPedSIM-for-FlowSIMPro
+
+Releases are tagged there as v<version>. The version of this installation is
+shown in Windows under Settings > Apps > Installed apps, and on Linux by the
+package manager.
+
+This work is a modified version of JuPedSim, developed by Forschungszentrum
+Jülich GmbH and the JuPedSim Development Team. The unmodified upstream project
+is at
+
+    https://github.com/PedestrianDynamics/jupedsim
+    https://jupedsim.org
+
+The changes made for FlowSIM Pro are the commit history of the repository named
+above, measured against that upstream.

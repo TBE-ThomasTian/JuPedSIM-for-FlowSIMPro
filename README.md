@@ -65,12 +65,15 @@ cd build && cpack
 ```
 
 The add-on carries a year-based release number, `FLOWSIMPRO_ADDON_VERSION`
-(default `2026`), independent of the upstream JuPedSim version.
+(default `2026.1.0`), independent of the upstream JuPedSim version: the year,
+the release within it, and a corrected build of that release. It must be
+`MAJOR.MINOR.PATCH` — CMake rejects anything else, because the parts are handed
+to CPack separately.
 
 | Platform | Generators | Result |
 | --- | --- | --- |
-| Linux | `TGZ`, `DEB`, `RPM` *(if `rpmbuild` is present)* | `flowsimpro-evac-addon_2026_amd64.deb`, `flowsimpro-evac-addon-2026-1.x86_64.rpm`, `flowsimpro-evac-addon-2026-Linux.tar.gz` |
-| Windows | `ZIP`, `NSIS` *(if `makensis` is present)* | `flowsimpro-evac-addon-2026-win64.exe`, `flowsimpro-evac-addon-2026-win64.zip` |
+| Linux | `TGZ`, `DEB`, `RPM` *(if `rpmbuild` is present)* | `flowsimpro-evac-addon_2026.1.0_amd64.deb`, `flowsimpro-evac-addon-2026.1.0-1.x86_64.rpm`, `flowsimpro-evac-addon-2026.1.0-Linux.tar.gz` |
+| Windows | `ZIP`, `NSIS` *(if `makensis` is present)* | `flowsimpro-evac-addon-2026.1.0-win64.exe`, `flowsimpro-evac-addon-2026.1.0-win64.zip` |
 
 The install prefix is chosen so that FlowSIM Pro auto-detects the solver with no
 user configuration — these are exactly the paths probed by
@@ -82,6 +85,22 @@ user configuration — these are exactly the paths probed by
 Example scenarios and format docs are installed alongside under
 `share/jupedsim/`. The Linux packages declare only `libc6`, `libgcc-s1` and
 `libstdc++6`; CGAL, Boost, fmt, glm and libdeflate are linked statically.
+
+### Windows: the signed installer
+
+The NSIS generator above needs `makensis` on `PATH` and cannot be code signed.
+The installer that ships is built with Inno Setup instead, from
+[`scripts/installer/flowsimpro-evac-addon.iss`](scripts/installer/flowsimpro-evac-addon.iss),
+which produces the same install tree under the same prefix:
+
+```
+ISCC.exe scripts\installer\flowsimpro-evac-addon.iss
+```
+
+It signs the solver, the setup and the uninstaller with the `GlobalSignToken`
+sign tool configured in Inno Setup. Add `/DSkipSign` to build without the token.
+The result lands in `build\installer\`. `scripts\installer\make_icon.ps1` draws
+the icon; run it only when the artwork changes.
 
 ## FlowSIMPro-specific changes
 
